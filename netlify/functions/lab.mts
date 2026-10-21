@@ -11,15 +11,22 @@ interface LabResult { model: string; status: "rendering" | "done" | "failed"; ke
 const fail = (error: string, status = 400) => Response.json({ error }, { status });
 
 async function startRun(origin: string, testId: string, model: string) {
-  const res = await fetch(`${origin}/.netlify/functions/lab-background`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-internal-sig": sign(`lab:${testId}:${model}`) },
-    body: JSON.stringify({ testId, model }),
-  });
-  if (res.status !== 202 && !res.ok) {
-    await labStore().setJSON(`result/${testId}/${model.replace("/", "--")}`, { model, status: "failed", error: `Couldn't start (status ${res.status}).` });
+  const fail = (error: string) => labStore().setJSON(`result/${testId}/${model.replace("/", "--")}`, { model, status: "failed", error });
+  try {
+    const res = await fetch(`${origin}/.netlify/functions/lab-background`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-internal-sig": sign(`lab:${testId}:${model}`) },
+      body: JSON.stringify({ testId, model }),
+    });
+    if (res.status !== 202 && !res.ok) await fail(`Couldn't start (status ${res.status}).`);
+  } catch (e) {
+    // Record the failure so the test shows "Try again" instead of rendering forever.
+    await fail(`Couldn't start: ${e instanceof Error ? e.message : String(e)}`);
   }
 }
+
+// A model with no result this long after the test started never began (renders stop at 12 minutes).
+const NEVER_STARTED_MS = 15 * 60 * 1000;
 
 export default async (req: Request) => {
   if (!isAdmin(req)) return fail("Wrong password.", 401);
@@ -33,7 +40,10 @@ export default async (req: Request) => {
         const t = await store.get(b.key, { type: "json" }) as LabTest;
         const results = await Promise.all(COMPARE_MODELS.map(async (m) => {
           const r = await store.get(`result/${t.id}/${m.id.replace("/", "--")}`, { type: "json" }) as LabResult | null;
-          return { ...m, status: r?.status ?? "rendering", error: r?.error, seconds: r?.seconds, url: r?.key ? fileUrl(origin, r.key) : null };
+          const stale = !r && Date.now() - Date.parse(t.createdAt) > NEVER_STARTED_MS;
+          const status = r?.status ?? (stale ? "failed" : "rendering");
+          const error = r?.error ?? (stale ? "Never started. Try again." : undefined);
+          return { ...m, status, error, seconds: r?.seconds, url: r?.key ? fileUrl(origin, r.key) : null };
         }));
         return { ...t, styleName: styleInfo(t.style).name, categoryName: categoryInfo(t.category).name, photoUrl: fileUrl(origin, t.photoKey), results };
       }));
