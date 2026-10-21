@@ -1,5 +1,5 @@
 // Products, prices and prompts live here. Prices are in cents and include US shipping.
-export type StyleId = "engraved" | "atelier" | "prism";
+export type StyleId = "engraved" | "atelier" | "studio";
 export type CategoryId = "automobile" | "yacht" | "aircraft" | "building" | "other";
 export type SizeId = "16x20" | "24x30" | "30x40";
 export type FrameId = "walnut" | "ebony";
@@ -35,13 +35,13 @@ export const STYLES: Partial<Record<StyleId, Style>> = {
 
 export const LAB_STYLES: Record<StyleId, Style> = {
   ...(STYLES as Record<StyleId, Style>),
-  prism: {
-    name: "Prism (test)",
-    blurb: "A precise drawing over abstract planes of color, like a mid-century poster.",
-    intro: "Turn the {subject} in this photo into a bold modern art print: a precise, finely drawn {subject} in its true colors over an abstract composition of overlapping color planes.",
-    prompt: "fine, exact ink and colored-pencil linework captures every edge, panel line and detail, and the {subject} keeps its exact colors from the photo. Behind it, large overlapping translucent geometric shapes, arcs and bands in the {subject}'s own color plus two harmonious accent colors fracture the space like a mid-century modernist or Bauhaus poster. A few of the planes pass through the {subject} as subtle tints without hiding any detail",
-    setting: "Show the {subject} centered and fully visible, with the abstract color shapes filling the space around it on warm white paper. Remove the real background, people, other vehicles and clutter.",
-    finish: "No text, lettering, signature, border or frame. Clean, crisp edges on the {subject}; no blur, no photo filter look.",
+  studio: {
+    name: "Studio (test)",
+    blurb: "A designer's marker rendering in your true colors, like a concept-car sketch.",
+    intro: "Turn the {subject} in this photo into a professional hand-drawn design studio marker rendering, the kind a top custom-car or industrial designer draws to present a build: alcohol markers and colored pencil on white marker paper, suitable for framing as a fine-art print.",
+    prompt: "confident, fast black fineliner and marker outlines with a few loose construction lines. Render the {subject}'s exact colors from the photo with smooth, layered marker strokes, deeper in shadow, and leave crisp areas of bare white paper for the brightest highlights. Paint, chrome, glass and polished metal get high-contrast reflections, with a dark horizon-line reflection running along the sides and sharp white glints. Small details such as wheels, lights, trim, windows and fittings are drawn crisply. Slightly dramatic studio lighting",
+    setting: "Show the {subject} alone on white paper with generous margins, grounded by a solid dark marker shadow beneath it and a few bold horizontal swipes of marker in the {subject}'s own color or a complementary color behind it, like a designer's presentation board. Remove the real background, people, other vehicles and clutter.",
+    finish: "No text, lettering, signature, logo, border or frame. Keep the {subject} exact: do not restyle, customize or exaggerate it. Not a photo filter, not a cartoon, not a watercolor.",
   },
 };
 
