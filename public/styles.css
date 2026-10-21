@@ -111,7 +111,9 @@ legend { font: 400 24px/1.2 var(--display); margin-bottom: 18px; padding: 0; dis
 .total span { font: 500 12px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted-night); }
 .total strong { font: 400 34px/1 var(--display); color: #fff; font-variant-numeric: tabular-nums; }
 .fine { font-size: 13px; color: var(--muted-night); margin: 0; }
-.draft-note { font: 400 13px/1.4 var(--mono); color: var(--brass-hi); margin: 0; }
+.form-err { font-size: 14px; color: #f0a8a0; margin: 0; }
+.notes { display: grid; gap: 6px; margin-top: 14px; font: 500 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted-paper); }
+.notes textarea { font: 400 16px/1.4 var(--body); color: var(--ink); background: #fbf8f1; border: 1px solid var(--line-paper); padding: 12px 14px; letter-spacing: 0; text-transform: none; resize: vertical; }
 @media (max-width: 960px) { .order { grid-template-columns: 1fr; } .summary { position: static; } }
 @media (max-width: 560px) { .styles, .plaque-fields { grid-template-columns: 1fr; } .sizes { grid-template-columns: 1fr; } }
 

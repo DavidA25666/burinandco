@@ -49,21 +49,21 @@
     <div class="wrap">
       <div class="sec-head">
         <p class="eyebrow">Commission</p>
-        <h2>Four choices, then we take it from there.</h2>
+        <h2>A few choices, then we take it from there.</h2>
       </div>
       <form id="order" class="order" novalidate>
         <div class="steps">
           <fieldset>
             <legend><span class="n">1</span> What are we engraving?</legend>
             <div class="chips" role="radiogroup">
-              <label><input type="radio" name="category" value="Automobile" checked> Automobile</label>
-              <label><input type="radio" name="category" value="Yacht"> Yacht</label>
-              <label><input type="radio" name="category" value="Aircraft"> Aircraft</label>
-              <label><input type="radio" name="category" value="Building"> Building</label>
-              <label><input type="radio" name="category" value="Other"> Something else</label>
+              <label><input type="radio" name="category" value="automobile" checked> Automobile</label>
+              <label><input type="radio" name="category" value="yacht"> Yacht</label>
+              <label><input type="radio" name="category" value="aircraft"> Aircraft</label>
+              <label><input type="radio" name="category" value="building"> Building</label>
+              <label><input type="radio" name="category" value="other"> Something else</label>
             </div>
             <label class="drop" for="photo">
-              <input id="photo" name="photo" type="file" accept="image/*">
+              <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp">
               <img id="photoPrev" alt="" hidden>
               <span id="photoTxt"><strong>Upload a photograph</strong><br>A clean side or three-quarter view works best. You can send more later.</span>
             </label>
@@ -73,12 +73,12 @@
             <legend><span class="n">2</span> Choose a style</legend>
             <div class="styles">
               <label class="style">
-                <input type="radio" name="style" value="Engraved" checked>
+                <input type="radio" name="style" value="engraved" checked>
                 <img src="img/art-engraved.jpg" alt="Black line engraving of a coupe on cream paper" width="1400" height="560" loading="lazy">
                 <span><strong>Engraved</strong> Black ink on warm cotton rag. Classic, like a vintage patent plate.</span>
               </label>
               <label class="style">
-                <input type="radio" name="style" value="Noir">
+                <input type="radio" name="style" value="noir">
                 <img src="img/art-noir.jpg" alt="Silver line engraving of a coupe on black paper" width="1400" height="560" loading="lazy">
                 <span><strong>Noir</strong> Silver lines on matte black. Dramatic and modern.</span>
               </label>
@@ -93,19 +93,28 @@
               <label><input type="radio" name="size" value="30x40" data-price="1250"><span class="sz">30 × 40 in</span><span class="pr">$1,250</span></label>
             </div>
             <div class="chips frames" role="radiogroup">
-              <label><input type="radio" name="frame" value="Walnut" checked> American walnut</label>
-              <label><input type="radio" name="frame" value="Ebonized oak"> Ebonized oak</label>
+              <label><input type="radio" name="frame" value="walnut" checked> American walnut</label>
+              <label><input type="radio" name="frame" value="ebony"> Ebonized oak</label>
             </div>
-            <label class="check"><input type="checkbox" id="collector" data-price="300"> <span><strong>Collector edition, +$300.</strong> Two proof rounds with a second artist pass, hand-numbered certificate, and a wooden presentation crate.</span></label>
+            <label class="check"><input type="checkbox" id="collector" name="collector" data-price="300"> <span><strong>Collector edition, +$300.</strong> Two proof rounds with a second artist pass, hand-numbered certificate, and a wooden presentation crate.</span></label>
           </fieldset>
 
           <fieldset>
             <legend><span class="n">4</span> The brass plaque</legend>
             <div class="plaque-fields">
-              <label for="line1">Line one <input id="line1" name="line1" maxlength="38" value="1973 Porsche 911 Carrera RS"></label>
-              <label for="line2">Line two <input id="line2" name="line2" maxlength="38" value="Chassis 911 360 0417"></label>
+              <label for="line1">Line one <input id="line1" name="line1" maxlength="38" placeholder="1973 Porsche 911 Carrera RS"></label>
+              <label for="line2">Line two <input id="line2" name="line2" maxlength="38" placeholder="Chassis 911 360 0417"></label>
             </div>
             <p class="hint">Ordering for a client? Put their name on line two and we ship straight to them.</p>
+          </fieldset>
+
+          <fieldset>
+            <legend><span class="n">5</span> Your details</legend>
+            <div class="plaque-fields">
+              <label for="name">Your name <input id="name" name="name" autocomplete="name" required></label>
+              <label for="email">Email for your proof <input id="email" name="email" type="email" autocomplete="email" required></label>
+            </div>
+            <label class="notes" for="notes">Anything we should know? (optional) <textarea id="notes" name="notes" maxlength="600" rows="2" placeholder="For example: draw it with the hardtop on, or match the second photo's wheels."></textarea></label>
           </fieldset>
         </div>
 
@@ -121,9 +130,9 @@
             <div id="sColRow" hidden><dt>Collector edition</dt><dd>+$300</dd></div>
           </dl>
           <p class="total"><span>Total</span><strong id="total">$395</strong></p>
-          <button class="btn wide" type="submit">Continue to payment</button>
+          <button class="btn wide" type="submit" id="pay">Continue to payment</button>
           <p class="fine">Digital proof within 48 hours. Two rounds of changes are included, and nothing prints until you approve.</p>
-          <p id="draftNote" class="draft-note" hidden>This is a draft site. Checkout is not connected yet.</p>
+          <p id="formErr" class="form-err" role="alert" hidden></p>
         </aside>
       </form>
     </div>
