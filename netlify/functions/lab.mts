@@ -1,7 +1,7 @@
 import type { Config } from "@netlify/functions";
 import { labStore, filesStore } from "../shared/store.mts";
 import { isAdmin, fileUrl, sign } from "../shared/sign.mts";
-import { STYLES, SIZES, CATEGORIES, type StyleId, type SizeId, type CategoryId, styleInfo, categoryInfo } from "../shared/catalog.mts";
+import { LAB_STYLES, SIZES, CATEGORIES, type StyleId, type SizeId, type CategoryId, styleInfo, categoryInfo } from "../shared/catalog.mts";
 import { COMPARE_MODELS } from "../shared/replicate.mts";
 
 // Compare page: render one photo with every model in COMPARE_MODELS so you can pick the most faithful one.
@@ -66,7 +66,7 @@ export default async (req: Request) => {
     const category = String(form.get("category") ?? "automobile") as CategoryId;
     if (!(photo instanceof File) || photo.size === 0) return fail("Add a photo.");
     if (photo.size > 5.5 * 1024 * 1024) return fail("That photo is too large. Use one under 5 MB.");
-    if (!STYLES[style]) return fail("Pick a style.");
+    if (!LAB_STYLES[style]) return fail("Pick a style.");
     if (!SIZES[size]) return fail("Pick a size.");
     if (!CATEGORIES[category]) return fail("Pick what's in the photo.");
 

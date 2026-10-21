@@ -33,7 +33,7 @@ export default async (req: Request) => {
   await triggerRender(origin, order.id, null);
   await notifyOwner(
     `New order: ${order.customer.name}`,
-    `<p>${esc(order.customer.name)} ordered a ${SIZES[order.size].name} ${esc(styleInfo(order.style).name)} engraving of their ${categoryInfo(order.category).subject}${order.collector ? " (collector edition)" : ""}. It is rendering now, and you'll get another email when it's ready to review.</p>`,
+    `<p>${esc(order.customer.name)} ordered a ${SIZES[order.size].name} ${esc(styleInfo(order.style).name)} portrait of their ${categoryInfo(order.category).subject}${order.collector ? " (collector edition)" : ""}. It is rendering now, and you'll get another email when it's ready to review.</p>`,
   );
   return new Response("ok");
 };

@@ -18,7 +18,7 @@
     const size = v("size");
     const collector = $("collector").checked;
     $("sCat").textContent = label(v("category"));
-    $("sStyle").textContent = v("style").value === "noir" ? "Noir" : "Engraved";
+    $("sStyle").textContent = v("style").value === "atelier" ? "Atelier" : "Engraved";
     $("sSize").textContent = sizeLabel[size.value] + ", " + label(v("frame"));
     $("sColRow").hidden = !collector;
     $("total").textContent = money(Number(size.dataset.price) + (collector ? 300 : 0));
@@ -46,7 +46,7 @@
     e.preventDefault();
     $("formErr").hidden = true;
     const photo = $("photo").files[0];
-    if (!photo) return showError("Add a photograph of what we're engraving.");
+    if (!photo) return showError("Add a photograph of what we're drawing.");
     if (photo.size > 5.5 * 1024 * 1024) return showError("That photo is too large. Use one under 5 MB.");
     if (!$("line1").value.trim()) return showError("Add the first line of the plaque.");
     if (!$("name").value.trim()) return showError("Add your name.");
