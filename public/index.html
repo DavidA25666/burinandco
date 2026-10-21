@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Burin & Co.</title>
+<meta name="description" content="Commissioned line engravings of your car, yacht, aircraft or building. Archival cotton paper, hardwood frame, engraved brass plaque.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Hanken+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="mark" href="#">Burin <span>&amp;</span> Co.</a>
+    <nav aria-label="Main">
+      <a href="#work">The work</a>
+      <a href="#details">Materials</a>
+      <a href="#faq">Questions</a>
+      <a class="nav-cta" href="#commission">Commission</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap hero-in">
+      <div class="hero-copy">
+        <p class="eyebrow">Commissioned line engravings</p>
+        <h1>Your finest possession, engraved.</h1>
+        <p class="lede">Send us a photograph of your car, yacht, aircraft or building. We engrave it in the manner of a bank note, print it on cotton rag, and frame it in hardwood with a brass plaque bearing its name and number.</p>
+        <div class="hero-actions">
+          <a class="btn" href="#commission">Begin a commission</a>
+          <span class="from">From $395, framed, shipped free in the US</span>
+        </div>
+      </div>
+      <figure class="hero-art">
+        <img id="heroImg" src="img/framed-noir.jpg" alt="A framed silver-on-black engraving of a classic coupe with a brass plaque" width="1120" height="850">
+        <div class="swatch" role="group" aria-label="Preview style">
+          <button type="button" data-hero="noir" aria-pressed="true">Noir</button>
+          <button type="button" data-hero="engraved" aria-pressed="false">Engraved</button>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <section id="commission" class="commission">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Commission</p>
+        <h2>Four choices, then we take it from there.</h2>
+      </div>
+      <form id="order" class="order" novalidate>
+        <div class="steps">
+          <fieldset>
+            <legend><span class="n">1</span> What are we engraving?</legend>
+            <div class="chips" role="radiogroup">
+              <label><input type="radio" name="category" value="Automobile" checked> Automobile</label>
+              <label><input type="radio" name="category" value="Yacht"> Yacht</label>
+              <label><input type="radio" name="category" value="Aircraft"> Aircraft</label>
+              <label><input type="radio" name="category" value="Building"> Building</label>
+              <label><input type="radio" name="category" value="Other"> Something else</label>
+            </div>
+            <label class="drop" for="photo">
+              <input id="photo" name="photo" type="file" accept="image/*">
+              <img id="photoPrev" alt="" hidden>
+              <span id="photoTxt"><strong>Upload a photograph</strong><br>A clean side or three-quarter view works best. You can send more later.</span>
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend><span class="n">2</span> Choose a style</legend>
+            <div class="styles">
+              <label class="style">
+                <input type="radio" name="style" value="Engraved" checked>
+                <img src="img/art-engraved.jpg" alt="Black line engraving of a coupe on cream paper" width="1400" height="560" loading="lazy">
+                <span><strong>Engraved</strong> Black ink on warm cotton rag. Classic, like a vintage patent plate.</span>
+              </label>
+              <label class="style">
+                <input type="radio" name="style" value="Noir">
+                <img src="img/art-noir.jpg" alt="Silver line engraving of a coupe on black paper" width="1400" height="560" loading="lazy">
+                <span><strong>Noir</strong> Silver lines on matte black. Dramatic and modern.</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend><span class="n">3</span> Size and frame</legend>
+            <div class="sizes" role="radiogroup">
+              <label><input type="radio" name="size" value="16x20" data-price="395" checked><span class="sz">16 × 20 in</span><span class="pr">$395</span></label>
+              <label><input type="radio" name="size" value="24x30" data-price="695"><span class="sz">24 × 30 in</span><span class="pr">$695</span></label>
+              <label><input type="radio" name="size" value="30x40" data-price="1250"><span class="sz">30 × 40 in</span><span class="pr">$1,250</span></label>
+            </div>
+            <div class="chips frames" role="radiogroup">
+              <label><input type="radio" name="frame" value="Walnut" checked> American walnut</label>
+              <label><input type="radio" name="frame" value="Ebonized oak"> Ebonized oak</label>
+            </div>
+            <label class="check"><input type="checkbox" id="collector" data-price="300"> <span><strong>Collector edition, +$300.</strong> Two proof rounds with a second artist pass, hand-numbered certificate, and a wooden presentation crate.</span></label>
+          </fieldset>
+
+          <fieldset>
+            <legend><span class="n">4</span> The brass plaque</legend>
+            <div class="plaque-fields">
+              <label for="line1">Line one <input id="line1" name="line1" maxlength="38" value="1973 Porsche 911 Carrera RS"></label>
+              <label for="line2">Line two <input id="line2" name="line2" maxlength="38" value="Chassis 911 360 0417"></label>
+            </div>
+            <p class="hint">Ordering for a client? Put their name on line two and we ship straight to them.</p>
+          </fieldset>
+        </div>
+
+        <aside class="summary" aria-live="polite">
+          <div class="plaque" aria-label="Plaque preview">
+            <span id="pl1">1973 Porsche 911 Carrera RS</span>
+            <span id="pl2">Chassis 911 360 0417</span>
+          </div>
+          <dl>
+            <div><dt>Subject</dt><dd id="sCat">Automobile</dd></div>
+            <div><dt>Style</dt><dd id="sStyle">Engraved</dd></div>
+            <div><dt>Size</dt><dd id="sSize">16 × 20 in, American walnut</dd></div>
+            <div id="sColRow" hidden><dt>Collector edition</dt><dd>+$300</dd></div>
+          </dl>
+          <p class="total"><span>Total</span><strong id="total">$395</strong></p>
+          <button class="btn wide" type="submit">Continue to payment</button>
+          <p class="fine">Digital proof within 48 hours. Two rounds of changes are included, and nothing prints until you approve.</p>
+          <p id="draftNote" class="draft-note" hidden>This is a draft site. Checkout is not connected yet.</p>
+        </aside>
+      </form>
+    </div>
+  </section>
+
+  <section id="work" class="work">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">The work</p>
+        <h2>Drawn line by line, the way bank notes are.</h2>
+        <p class="sub">Every tone is built from fine parallel lines that swell and thin with the light, the same technique engravers have used on currency and share certificates for two centuries. It flatters paint, chrome, glass and hull lines.</p>
+      </div>
+      <div class="pair">
+        <figure><img src="img/framed-engraved.jpg" alt="Framed black-on-cream engraving of a coupe in a walnut frame with brass plaque" width="1120" height="850" loading="lazy"><figcaption>Engraved, in American walnut</figcaption></figure>
+        <figure><img src="img/framed-noir.jpg" alt="Framed silver-on-black engraving of a coupe in an ebonized frame" width="1120" height="850" loading="lazy"><figcaption>Noir, in ebonized oak</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="process">
+    <div class="wrap">
+      <div class="sec-head"><p class="eyebrow">How a commission runs</p></div>
+      <ol class="flow">
+        <li><span class="n">1</span><h3>You send a photograph</h3><p>Order above. Any clear photo works; we will ask if we need another angle.</p></li>
+        <li><span class="n">2</span><h3>We send a proof in 48 hours</h3><p>We check every badge, wheel, window and hull line against your photo. Ask for changes twice at no cost.</p></li>
+        <li><span class="n">3</span><h3>It arrives framed</h3><p>Printed, framed and plaqued once you approve, then shipped insured in about two weeks.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="details" class="details">
+    <div class="wrap details-in">
+      <div class="sec-head">
+        <p class="eyebrow">Materials</p>
+        <h2>Built to hang for a hundred years.</h2>
+      </div>
+      <dl class="spec">
+        <div><dt>Paper</dt><dd>100% cotton rag, 310 gsm, archival pigment inks</dd></div>
+        <div><dt>Frame</dt><dd>Solid American walnut or ebonized oak, hand-joined</dd></div>
+        <div><dt>Glazing</dt><dd>Anti-reflective, UV-filtering acrylic</dd></div>
+        <div><dt>Mat</dt><dd>Wide conservation mat with a deep bevel</dd></div>
+        <div><dt>Plaque</dt><dd>Solid brass, engraved with your two lines</dd></div>
+        <div><dt>Certificate</dt><dd>Numbered and signed, in a linen envelope</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section id="faq" class="faq">
+    <div class="wrap">
+      <div class="sec-head"><p class="eyebrow">Questions</p></div>
+      <div class="qs">
+        <details><summary>Will it match my exact car or boat?</summary><p>Yes. We work from your photograph and check the proof detail by detail. If something is off, tell us and we redraw it.</p></details>
+        <details><summary>Can I order it as a gift for a client?</summary><p>Yes. Many orders come from dealers and brokers at closing. Put the client's name on the plaque, enter their address at checkout, and we include no pricing in the box.</p></details>
+        <details><summary>What if I don't have a good photo?</summary><p>Send what you have. A listing photo, a dealer photo, or a phone picture taken from the side all work.</p></details>
+        <details><summary>How long does it take?</summary><p>Proof in 48 hours. After you approve, about two weeks to your door in the US.</p></details>
+        <details><summary>Do you ship outside the US?</summary><p>Yes, at cost. We quote it before you pay.</p></details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <span class="mark">Burin <span>&amp;</span> Co.</span>
+    <span>A burin is the steel tool an engraver cuts lines with.</span>
+  </div>
+</footer>
+<script src="app.js"></script>
+</body>
+</html>
