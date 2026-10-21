@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Orders · Burin & Co.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ops.css">
+<style>
+  body { background: var(--wall); }
+  .layout { display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; padding-block: 1.5rem 4rem; align-items: start; }
+  .list { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); }
+  .list button { display: block; width: 100%; text-align: left; font: inherit; background: none; border: 0; border-bottom: 1px solid var(--line); padding: .85rem 1rem; cursor: pointer; color: var(--ink); }
+  .list button:last-child { border-bottom: 0; }
+  .list button[aria-current="true"] { background: rgba(184,149,90,.12); box-shadow: inset 3px 0 0 var(--brass); }
+  .list small { display: block; color: var(--muted); }
+  .badge { display: inline-block; font-size: .8rem; font-weight: 600; padding: .15rem .5rem; border-radius: 99px; background: #E7EBE5; color: var(--ink); margin-top: .3rem; }
+  .badge.act { background: #F3E3BE; color: #5E430D; }
+  .badge.bad { background: #F2D6D6; color: var(--error); }
+  .badge.done { background: #E3E8DC; color: #2F4A2A; }
+  .detail { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(1rem, 3vw, 2rem); min-height: 20rem; }
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.25rem 0; }
+  .compare figure { margin: 0; }
+  .compare img { width: 100%; border: 1px solid var(--line); background: var(--paper); }
+  .compare figcaption { font-size: .9rem; color: var(--muted); margin-top: .35rem; }
+  .versions { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: .5rem; }
+  .versions button { font: inherit; font-size: .9rem; padding: .3rem .65rem; border: 1px solid var(--line); background: var(--paper); border-radius: var(--radius); cursor: pointer; }
+  .versions button[aria-pressed="true"] { border-color: var(--ink); background: rgba(184,149,90,.12); }
+  .box { border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem 1.1rem; margin-bottom: 1rem; background: var(--paper); }
+  .box h3 { font-size: 1.15rem; margin-bottom: .4rem; }
+  .request { border-left: 3px solid var(--brass); padding-left: .8rem; margin: .5rem 0; }
+  .actions { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-top: .75rem; }
+  .actions .btn { padding: .75rem 1.1rem; }
+  .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .25rem 1.5rem; color: var(--muted); font-size: .95rem; }
+  .history { font-size: .9rem; color: var(--muted); padding-left: 1.1rem; }
+  .gate { max-width: 360px; margin: 4rem auto; }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: .75rem; gap: 1rem; }
+  .toolbar label { font-size: .9rem; color: var(--muted); }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } .compare { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header class="site-head"><div class="wrap"><a class="brand" href="/admin.html">Burin &amp; Co.<span>Orders</span></a><nav><a href="/lab.html">Compare models</a></nav></div></header>
+
+<main class="wrap">
+  <form class="gate card" id="gate" hidden>
+    <label class="label" for="pw">Dashboard password</label>
+    <input type="password" id="pw" autocomplete="current-password">
+    <div class="actions"><button class="btn" type="submit">Open dashboard</button></div>
+    <p class="form-error" id="gate-err" role="alert"></p>
+  </form>
+
+  <div class="layout" id="app" hidden>
+    <div>
+      <div class="toolbar"><strong>Orders</strong><label><input type="checkbox" id="show-all"> Show archived and unpaid</label></div>
+      <div class="list" id="list"></div>
+    </div>
+    <div class="detail" id="detail"><p>Select an order.</p></div>
+  </div>
+</main>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const when = (iso) => new Date(iso).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  let pw = sessionStorage.getItem("hg-admin") || "";
+  let orders = [];
+  let selected = location.hash.slice(1) || null;
+  let shownVersion = {};
+  let timer = null;
+
+  const STATUS = {
+    awaiting_payment: ["Unpaid", ""],
+    paid: ["Paid, starting render", ""],
+    rendering: ["Rendering", ""],
+    render_failed: ["Render failed", "bad"],
+    needs_review: ["Needs your review", "act"],
+    proof_sent: ["Waiting on customer", ""],
+    changes_requested: ["Changes requested", "act"],
+    customer_approved: ["Approved, send to print", "act"],
+    sent_to_print: ["Sent to print", "done"],
+    archived: ["Archived", ""],
+  };
+  const badge = (s) => `<span class="badge ${STATUS[s]?.[1] || ""}">${STATUS[s]?.[0] || s}</span>`;
+
+  async function api(method, body) {
+    const url = method === "GET" ? `/api/admin${$("#show-all").checked ? "?all=1" : ""}` : "/api/admin";
+    const res = await fetch(url, { method, headers: { "x-admin-password": pw, "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) { sessionStorage.removeItem("hg-admin"); showGate("Wrong password."); throw new Error("Wrong password."); }
+    if (!res.ok) throw new Error(data.error || "Something went wrong.");
+    return data;
+  }
+
+  function showGate(msg) { $("#app").hidden = true; $("#gate").hidden = false; $("#gate-err").textContent = msg || ""; $("#pw").focus(); }
+
+  async function load() {
+    const data = await api("GET");
+    orders = data.orders;
+    $("#gate").hidden = true; $("#app").hidden = false;
+    renderList();
+    renderDetail();
+    clearTimeout(timer);
+    if (orders.some((o) => o.status === "rendering" || o.status === "paid")) timer = setTimeout(() => load().catch(() => {}), 15000);
+  }
+
+  function renderList() {
+    $("#list").innerHTML = orders.length
+      ? orders.map((o) => `<button data-id="${o.id}" aria-current="${o.id === selected}">
+          <strong>${esc(o.customer.name)}</strong><small>${esc(o.categoryName)}, ${esc(o.styleName)}, ${esc(o.sizeName)} · ${when(o.createdAt)}</small>${badge(o.status)}</button>`).join("")
+      : `<p style="padding:1rem;margin:0">No orders yet. They'll appear here after checkout.</p>`;
+  }
+  $("#list").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-id]");
+    if (!b) return;
+    selected = b.dataset.id;
+    history.replaceState(null, "", `#${selected}`);
+    renderList(); renderDetail();
+  });
+
+  function renderDetail() {
+    const o = orders.find((x) => x.id === selected);
+    if (!o) { $("#detail").innerHTML = "<p>Select an order.</p>"; return; }
+    const n = o.renders.length;
+    const v = Math.min(shownVersion[o.id] || n, n);
+    const r = o.renders[v - 1];
+    const a = o.shipping?.address;
+    const lastReq = o.changeRequests.at(-1);
+    const canSendProof = n > 0 && ["needs_review", "proof_sent", "changes_requested"].includes(o.status);
+    const canRegen = !["rendering", "sent_to_print", "awaiting_payment"].includes(o.status);
+    const canPrint = o.status !== "sent_to_print" && n > 0;
+    const latest = o.renders[n - 1];
+
+    $("#detail").innerHTML = `
+      <h2 style="margin-bottom:.25rem">${esc(o.customer.name)}</h2>
+      ${badge(o.status)}
+      <div class="meta" style="margin-top:.75rem">
+        <span>${esc(o.categoryName)}, ${esc(o.styleName)}</span><span>${esc(o.sizeName)}, ${esc(o.frameName.toLowerCase())}</span>
+        ${o.collector ? "<span><strong>Collector edition</strong></span>" : ""}
+        <span>$${(o.price / 100).toFixed(2)}</span><span><a href="mailto:${esc(o.customer.email)}">${esc(o.customer.email)}</a></span>
+        ${a ? `<span>${esc(a.line1)}${a.line2 ? ", " + esc(a.line2) : ""}, ${esc(a.city)}, ${esc(a.state)} ${esc(a.postal_code)}</span>` : ""}
+      </div>
+      <p class="request" style="margin-top:1rem"><strong>Plaque:</strong> ${esc(o.plaque[0])}${o.plaque[1] ? ` / ${esc(o.plaque[1])}` : ""}. Check the spelling before ordering the plaque.</p>
+      ${o.notes ? `<p class="request" style="margin-top:1rem"><strong>Customer note:</strong> ${esc(o.notes)}</p>` : ""}
+      ${o.lastError && o.status === "render_failed" ? `<p class="form-error">${esc(o.lastError)}</p>` : ""}
+
+      <div class="compare">
+        <figure><img src="${o.photoUrl}" alt="Customer photo"><figcaption>Customer photo</figcaption></figure>
+        <figure>
+          ${n ? `<div class="versions">${o.renders.map((_, i) => `<button data-v="${i + 1}" aria-pressed="${i + 1 === v}">v${i + 1}</button>`).join("")}</div>
+            <a href="${r.url}" target="_blank" rel="noopener"><img src="${r.url}" alt="Engraving version ${v}"></a>
+            <figcaption>Version ${v}${r.note ? `: ${esc(r.note)}` : ""}. Click to open full size.</figcaption>`
+          : `<p>${o.status === "rendering" || o.status === "paid" ? "Rendering… this page refreshes on its own." : "No engraving yet."}</p>`}
+        </figure>
+      </div>
+
+      ${lastReq ? `<div class="box"><h3>Customer's change request (on v${lastReq.version})</h3><p class="request">${esc(lastReq.note)}</p></div>` : ""}
+
+      <div class="box">
+        <h3>Regenerate</h3>
+        <p class="hint">Describe what to fix. ${lastReq && o.status === "changes_requested" ? "The customer's request is filled in for you." : ""}</p>
+        <textarea id="adj" placeholder="For example: the wheels have five spokes, not ten; remove the extra mirror.">${o.status === "changes_requested" && lastReq ? esc(lastReq.note) : ""}</textarea>
+        <div class="actions"><button class="btn secondary" data-act="regenerate" ${canRegen ? "" : "disabled"}>Regenerate engraving</button></div>
+      </div>
+
+      <div class="box">
+        <h3>Send proof to customer</h3>
+        <p class="hint">Emails ${esc(o.customer.email)} a link to approve the newest version (v${n || "–"}) or request changes.</p>
+        <div class="actions"><button class="btn" data-act="send_proof" ${canSendProof ? "" : "disabled"}>Send proof v${n || ""}</button></div>
+      </div>
+
+      <div class="box">
+        <h3>Send to print</h3>
+        ${o.status === "sent_to_print" ? `<p>Sent to print${o.printOrderRef ? `: <strong>${esc(o.printOrderRef)}</strong>` : ""}.</p>` : `
+        <p class="hint">${o.status === "customer_approved" ? "The customer approved v" + n + "." : "The customer hasn't approved yet."} Download the full-size file, order the print, frame and plaque from the lab, then record the lab's order number here.</p>
+        ${latest ? `<p><a href="${latest.url}" download="burin-${o.id.slice(0, 8)}-v${n}.png">Download v${n} print file</a></p>` : ""}
+        <input type="text" id="print-ref" placeholder="Lab order number (optional)">
+        ${o.status !== "customer_approved" ? `<label class="hint"><input type="checkbox" id="force"> Mark sent without customer approval</label>` : ""}
+        <div class="actions"><button class="btn" data-act="mark_sent_to_print" ${canPrint ? "" : "disabled"}>Mark v${n || ""} as sent to print</button></div>`}
+      </div>
+
+      <p class="form-error" id="act-err" role="alert"></p>
+      <details><summary style="font-size:1.05rem">History</summary><ul class="history">${o.history.slice().reverse().map((h) => `<li>${when(h.at)}: ${esc(h.event)}</li>`).join("")}</ul></details>
+      <div class="actions"><button class="btn secondary" data-act="archive" ${o.status === "archived" ? "disabled" : ""}>Archive order</button></div>`;
+  }
+
+  $("#detail").addEventListener("click", async (e) => {
+    const vb = e.target.closest("button[data-v]");
+    if (vb) { shownVersion[selected] = Number(vb.dataset.v); renderDetail(); return; }
+    const b = e.target.closest("button[data-act]");
+    if (!b) return;
+    const action = b.dataset.act;
+    const err = $("#act-err");
+    const body = { action, id: selected };
+    if (action === "regenerate") body.note = $("#adj").value;
+    if (action === "mark_sent_to_print") {
+      body.force = $("#force")?.checked || false;
+      body.note = $("#print-ref")?.value || "";
+      if (!confirm("Mark this engraving as sent to print?")) return;
+    }
+    if (action === "send_proof" && !confirm("Email this proof to the customer?")) return;
+    if (action === "archive" && !confirm("Archive this order?")) return;
+    b.disabled = true; err.textContent = "";
+    try {
+      const { order } = await api("POST", body);
+      orders = orders.map((o) => (o.id === order.id ? order : o));
+      delete shownVersion[order.id];
+      renderList(); renderDetail();
+      if (order.status === "rendering") load().catch(() => {});
+    } catch (ex) { err.textContent = ex.message; b.disabled = false; }
+  });
+
+  $("#show-all").addEventListener("change", () => load().catch(() => {}));
+  $("#gate").addEventListener("submit", (e) => {
+    e.preventDefault();
+    pw = $("#pw").value;
+    sessionStorage.setItem("hg-admin", pw);
+    load().catch((ex) => showGate(ex.message));
+  });
+  if (pw) load().catch(() => {}); else showGate();
+})();
+</script>
+</body>
+</html>

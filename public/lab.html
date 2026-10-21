@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Compare models · Burin & Co.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ops.css">
+<style>
+  body { background: var(--wall); }
+  main { padding-block: 1.5rem 4rem; }
+  .panel { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(1rem, 3vw, 1.75rem); margin-bottom: 1.5rem; }
+  .new { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; align-items: end; }
+  select { width: 100%; font: inherit; padding: .7rem .8rem; border: 1.5px solid var(--line); border-radius: var(--radius); background: var(--paper); color: var(--ink); }
+  .tally { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; color: var(--muted); }
+  .tally strong { color: var(--ink); }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1rem; }
+  .grid figure { margin: 0; }
+  .grid img { width: 100%; border: 1px solid var(--line); background: var(--paper); }
+  .grid figcaption { font-size: .9rem; color: var(--muted); margin-top: .35rem; }
+  .grid figure.picked img { outline: 3px solid var(--brass); outline-offset: 2px; }
+  .ph { aspect-ratio: 5/4; display: grid; place-items: center; text-align: center; padding: 1rem; border: 1px dashed var(--line); color: var(--muted); font-size: .9rem; background: var(--paper); }
+  .pick { font: inherit; font-size: .85rem; margin-top: .4rem; padding: .3rem .6rem; border: 1px solid var(--line); background: var(--paper); border-radius: var(--radius); cursor: pointer; }
+  .pick[aria-pressed="true"] { border-color: var(--door); background: var(--door); color: var(--paper); }
+  .gate { max-width: 360px; margin: 4rem auto; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<header class="site-head"><div class="wrap"><a class="brand" href="/admin.html">Burin &amp; Co.<span>Compare models</span></a><nav><a href="/admin.html">Orders</a></nav></div></header>
+
+<main class="wrap">
+  <form class="gate card" id="gate" hidden>
+    <label class="label" for="pw">Dashboard password</label>
+    <input type="password" id="pw" autocomplete="current-password">
+    <div class="actions" style="margin-top:.75rem"><button class="btn" type="submit">Open</button></div>
+    <p class="form-error" id="gate-err" role="alert"></p>
+  </form>
+
+  <div id="app" hidden>
+    <form class="panel" id="new">
+      <h2 style="font-size:1.6rem">Test a photo</h2>
+      <p class="hint">Each photo is rendered by every model with the same prompt real orders use, so each test uses Replicate credit for every model.</p>
+      <div class="new">
+        <label><span class="label">Photo</span><input type="file" name="photo" accept="image/jpeg,image/png,image/webp" required></label>
+        <label><span class="label">Name (optional)</span><input type="text" name="label" placeholder="911 RS, side view"></label>
+        <label><span class="label">Subject</span><select name="category"><option value="automobile">Automobile</option><option value="yacht">Yacht</option><option value="aircraft">Aircraft</option><option value="building">Building</option><option value="other">Something else</option></select></label>
+        <label><span class="label">Style</span><select name="style" id="style"></select></label>
+        <label><span class="label">Shape</span><select name="size"><option value="16x20">16 × 20 (5:4)</option><option value="30x40">30 × 40 (4:3)</option></select></label>
+        <div><button class="btn" type="submit" id="go">Render with all models</button></div>
+      </div>
+      <p class="form-error" id="new-err" role="alert"></p>
+    </form>
+
+    <div class="panel"><strong>Most accurate so far</strong><div class="tally" id="tally"></div></div>
+    <div id="tests"></div>
+  </div>
+</main>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  let pw = sessionStorage.getItem("hg-admin") || "";
+  let tests = [];
+  let timer = null;
+
+  $("#style").innerHTML = [["engraved", "Engraved"], ["noir", "Noir"]]
+    .map(([v, n]) => `<option value="${v}">${n}</option>`).join("");
+
+  async function api(method, body, json) {
+    const headers = { "x-admin-password": pw };
+    if (json) headers["Content-Type"] = "application/json";
+    const res = await fetch("/api/lab", { method, headers, body: json ? JSON.stringify(body) : body });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) { sessionStorage.removeItem("hg-admin"); showGate("Wrong password."); throw new Error("Wrong password."); }
+    if (!res.ok) throw new Error(data.error || "Something went wrong.");
+    return data;
+  }
+  function showGate(msg) { $("#app").hidden = true; $("#gate").hidden = false; $("#gate-err").textContent = msg || ""; $("#pw").focus(); }
+
+  async function load() {
+    ({ tests } = await api("GET"));
+    $("#gate").hidden = true; $("#app").hidden = false;
+    render();
+    clearTimeout(timer);
+    if (tests.some((t) => t.results.some((r) => r.status === "rendering"))) timer = setTimeout(() => load().catch(() => {}), 10000);
+  }
+
+  function render() {
+    const models = tests[0]?.results ?? [];
+    const counts = Object.fromEntries(models.map((m) => [m.id, 0]));
+    tests.forEach((t) => { if (t.pick in counts) counts[t.pick]++; });
+    const judged = tests.filter((t) => t.pick).length;
+    $("#tally").innerHTML = models.length
+      ? models.map((m) => `<span><strong>${esc(m.name)}</strong>: ${counts[m.id]}</span>`).join("") + `<span>${judged} of ${tests.length} photos judged</span>`
+      : "<span>No tests yet.</span>";
+
+    $("#tests").innerHTML = tests.map((t) => `
+      <section class="panel" style="padding-block:1.25rem">
+        <h3 style="margin:0">${esc(t.label)}</h3>
+        <p class="hint" style="margin:.2rem 0 0">${esc(t.categoryName)} · ${esc(t.styleName)}</p>
+        <div class="grid">
+          <figure><a href="${t.photoUrl}" target="_blank" rel="noopener"><img src="${t.photoUrl}" alt="Original photo"></a><figcaption>Original photo</figcaption></figure>
+          ${t.results.map((r) => `<figure class="${t.pick === r.id ? "picked" : ""}">
+            ${r.status === "done" ? `<a href="${r.url}" target="_blank" rel="noopener"><img src="${r.url}" alt="${esc(r.name)} render"></a>`
+              : `<div class="ph">${r.status === "failed" ? `Failed: ${esc(r.error)}` : "Rendering…"}</div>`}
+            ${r.status === "failed" ? `<button class="pick" data-retry="${r.id}" data-test="${t.id}">Try again</button>` : ""}
+            <figcaption>${esc(r.name)}${r.seconds ? ` · ${r.seconds}s` : ""}</figcaption>
+            ${r.status === "done" ? `<button class="pick" data-test="${t.id}" data-model="${r.id}" aria-pressed="${t.pick === r.id}">${t.pick === r.id ? "Most accurate" : "Mark most accurate"}</button>` : ""}
+          </figure>`).join("")}
+        </div>
+      </section>`).join("");
+  }
+
+  $("#tests").addEventListener("click", async (e) => {
+    const b = e.target.closest("button.pick");
+    if (!b) return;
+    if (b.dataset.retry) {
+      b.disabled = true;
+      await api("POST", { id: b.dataset.test, retry: b.dataset.retry }, true).catch((ex) => alert(ex.message));
+      return load().catch(() => {});
+    }
+    const t = tests.find((x) => x.id === b.dataset.test);
+    const pick = t.pick === b.dataset.model ? null : b.dataset.model;
+    await api("POST", { id: t.id, pick }, true).catch((ex) => alert(ex.message));
+    t.pick = pick; render();
+  });
+
+  $("#new").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = $("#go"); btn.disabled = true; $("#new-err").textContent = "";
+    try { await api("POST", new FormData(e.target)); e.target.reset(); await load(); }
+    catch (ex) { $("#new-err").textContent = ex.message; }
+    btn.disabled = false;
+  });
+
+  $("#gate").addEventListener("submit", (e) => {
+    e.preventDefault();
+    pw = $("#pw").value; sessionStorage.setItem("hg-admin", pw);
+    load().catch((ex) => showGate(ex.message));
+  });
+  if (pw) load().catch(() => {}); else showGate();
+})();
+</script>
+</body>
+</html>

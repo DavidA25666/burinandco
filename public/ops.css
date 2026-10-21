@@ -1,0 +1,79 @@
+/* Shared by the admin, compare, proof and thank-you pages. The storefront uses styles.css. */
+:root {
+  --paper: #FBF8F1;   /* page background */
+  --wall: #F1EADB;    /* bands and panels: cotton rag */
+  --ink: #1D1B17;
+  --door: #1D1B17;    /* accent: engraver's ink */
+  --brass: #B8955A;   /* plaque brass, used sparingly */
+  --muted: #6B6457;
+  --line: #D7CDB8;
+  --error: #9B2C2C;
+  --display: "Bodoni Moda", Didot, Georgia, serif;
+  --body: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --serif: "Bodoni Moda", Didot, Georgia, serif;
+  --radius: 2px;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 1.0625rem/1.6 var(--body); }
+img { max-width: 100%; display: block; }
+a { color: var(--door); text-underline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--door); outline-offset: 3px; }
+
+h1, h2, h3 { font-family: var(--display); font-weight: 400; line-height: 1.1; margin: 0 0 .5em; letter-spacing: -.02em; text-wrap: balance; }
+h1 { font-size: clamp(2.2rem, 5vw, 3.6rem); }
+h2 { font-size: clamp(1.6rem, 3.2vw, 2.4rem); }
+h3 { font-size: 1.15rem; letter-spacing: -.01em; }
+p { margin: 0 0 1em; }
+.lede { font-size: 1.15rem; color: var(--muted); max-width: 34em; }
+.eyebrow { font-size: .78rem; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); margin: 0; }
+
+.wrap { width: min(1160px, 100% - 2rem); margin-inline: auto; }
+.narrow { max-width: 42rem; }
+main > section { padding-block: clamp(2rem, 5vw, 3.5rem); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem; font: 600 1rem/1.2 var(--body); padding: .95rem 1.4rem; border-radius: var(--radius);
+  border: 1.5px solid var(--door); background: var(--door); color: #fff; text-decoration: none; cursor: pointer;
+}
+.btn:hover { background: #3a352c; border-color: #3a352c; }
+.btn.secondary { background: transparent; color: var(--ink); border-color: var(--ink); }
+.btn.secondary:hover { background: rgba(22,25,29,.05); }
+.btn[disabled] { opacity: .55; cursor: not-allowed; }
+
+/* Site header */
+.site-head { background: var(--paper); border-bottom: 1px solid var(--line); }
+.site-head .wrap { display: flex; align-items: center; gap: 1.5rem; padding-block: 1rem; }
+.brand { display: inline-flex; align-items: baseline; gap: .5rem; color: var(--ink); text-decoration: none; font: 500 1.25rem/1 var(--display); letter-spacing: .03em; }
+.brand span { font: 500 .75rem/1 var(--body); color: var(--muted); letter-spacing: .14em; text-transform: uppercase; }
+.site-head nav { display: flex; align-items: center; gap: 1.5rem; margin-left: auto; }
+.site-head nav a { font-weight: 500; font-size: .95rem; color: var(--ink); text-decoration: none; }
+.site-head nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+/* Frame object */
+.frame {
+  --frame: #1C1C1C;
+  background: var(--frame); padding: clamp(8px, 2vw, 16px);
+  box-shadow: 0 1px 0 rgba(255,255,255,.15) inset, 0 14px 26px -12px rgba(0,0,0,.45), 0 3px 6px rgba(0,0,0,.18);
+}
+.frame.walnut { --frame: #5C3A24; background-image: repeating-linear-gradient(0deg, rgba(0,0,0,.08) 0 2px, transparent 2px 6px); }
+.frame.ebony { --frame: #1A1816; }
+.mat { background: #FBFBF8; padding: 9%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08), inset 2px 2px 4px rgba(0,0,0,.12); }
+.mat svg { width: 100%; height: auto; display: block; }
+
+/* Forms */
+.card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(1.25rem, 3vw, 2rem); }
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+legend, .label { font-size: .78rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: .45rem; display: block; padding: 0; }
+.hint { color: var(--muted); font-size: .92rem; font-weight: 400; letter-spacing: 0; text-transform: none; }
+input[type=text], input[type=email], input[type=password], textarea {
+  width: 100%; font: inherit; padding: .65rem .75rem; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; color: var(--ink);
+}
+input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, textarea:focus { border-color: var(--door); outline: none; box-shadow: 0 0 0 3px rgba(184,149,90,.25); }
+textarea { min-height: 4.5rem; resize: vertical; }
+.photo-msg { font-size: .92rem; margin: .4rem 0 0; }
+.photo-msg.warn { color: #7A5A12; } .photo-msg.ok { color: #2F6B3F; } .photo-msg.err, .form-error { color: var(--error); }
+.form-error { margin: .6rem 0 0; }
+.form-error:empty, .photo-msg:empty { display: none; }
+
+footer.site-foot { border-top: 1px solid var(--line); font-size: .92rem; }

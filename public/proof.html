@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Your proof · Burin & Co.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ops.css">
+<style>
+  .proof { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(2rem, 5vw, 4rem); align-items: start; }
+  .proof .frame { max-width: 460px; }
+  .proof .mat { padding: 9%; }
+  .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1.5rem 0; }
+  #change-box { display: none; margin-top: 1rem; }
+  #change-box.open { display: block; }
+  .done { border-left: 3px solid var(--brass); padding-left: 1rem; }
+  @media (max-width: 860px) { .proof { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header class="site-head"><div class="wrap"><a class="brand" href="/">Burin &amp; Co.</a></div></header>
+<main><section style="background:var(--wall)"><div class="wrap proof">
+  <div class="frame" id="frame"><div class="mat"><img id="render" alt="Your engraving proof"></div></div>
+  <div id="panel"><p>Loading your proof…</p></div>
+</div></section></main>
+
+<script>
+(() => {
+  const p = new URLSearchParams(location.search);
+  const o = p.get("o"), t = p.get("t");
+  const panel = document.getElementById("panel");
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+  function finished(html) { panel.innerHTML = `<div class="done">${html}</div>`; }
+
+  async function respond(action, note) {
+    const res = await fetch("/api/proof", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ o, t, action, note }) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "That didn't go through. Try again in a moment.");
+  }
+
+  fetch(`/api/proof?o=${encodeURIComponent(o || "")}&t=${encodeURIComponent(t || "")}`)
+    .then(async (r) => { const d = await r.json(); if (!r.ok) throw new Error(d.error); return d; })
+    .then((d) => {
+      document.getElementById("frame").className = `frame ${d.frame === "American walnut" ? "walnut" : "ebony"}`;
+      if (d.renderUrl) document.getElementById("render").src = d.renderUrl;
+      const intro = `<h1>Your ${esc(d.subject)}, engraved.</h1>
+        <p class="lede">${esc(d.style)}, ${esc(d.size)}, ${esc(d.frame.toLowerCase())} frame${d.version > 1 ? `. This is version ${d.version}.` : "."}</p>`;
+      if (!d.awaitingResponse) {
+        panel.innerHTML = intro + `<p class="done">Thanks, we have your response to this proof. We'll email you if anything else is needed.</p>`;
+        return;
+      }
+      panel.innerHTML = intro + `
+        <p>Look closely at every badge, line and window, and check the spelling of your plaque: <strong>${esc(d.plaque[0])}${d.plaque[1] ? " / " + esc(d.plaque[1]) : ""}</strong>. Once you approve, we print, frame, plaque and ship it.</p>
+        <div class="actions">
+          <button class="btn" id="approve">Approve and print</button>
+          <button class="btn secondary" id="change">Request a change</button>
+        </div>
+        <div id="change-box">
+          <label for="note" class="label">What should we change?</label>
+          <textarea id="note" maxlength="1000" placeholder="For example: the wheels should have five spokes, and the plaque should read 1973, not 1974."></textarea>
+          <div class="actions"><button class="btn" id="send-change">Send my notes</button></div>
+        </div>
+        <p class="form-error" id="err" role="alert"></p>`;
+      const err = document.getElementById("err");
+      document.getElementById("change").onclick = () => { document.getElementById("change-box").classList.add("open"); document.getElementById("note").focus(); };
+      document.getElementById("approve").onclick = async (e) => {
+        e.target.disabled = true; err.textContent = "";
+        try { await respond("approve"); finished("<h2>Approved. Thank you!</h2><p>Your engraving goes to print next. We'll email tracking details when it ships.</p>"); }
+        catch (ex) { err.textContent = ex.message; e.target.disabled = false; }
+      };
+      document.getElementById("send-change").onclick = async (e) => {
+        const note = document.getElementById("note").value.trim();
+        if (!note) { err.textContent = "Tell us what you'd like changed."; return; }
+        e.target.disabled = true; err.textContent = "";
+        try { await respond("changes", note); finished("<h2>Got it. We're on it.</h2><p>We'll email you an updated proof, usually within one business day.</p>"); }
+        catch (ex) { err.textContent = ex.message; e.target.disabled = false; }
+      };
+    })
+    .catch((ex) => { panel.innerHTML = `<h1>Proof not found</h1><p>${esc(ex.message || "This proof link isn't valid.")}</p>`; });
+})();
+</script>
+</body>
+</html>
