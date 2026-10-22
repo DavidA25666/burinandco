@@ -43,7 +43,7 @@
   fetch(`/api/proof?o=${encodeURIComponent(o || "")}&t=${encodeURIComponent(t || "")}`)
     .then(async (r) => { const d = await r.json(); if (!r.ok) throw new Error(d.error); return d; })
     .then((d) => {
-      document.getElementById("frame").className = `frame ${d.frame === "American walnut" ? "walnut" : "ebony"}`;
+      document.getElementById("frame").className = `frame ${d.frame === "Black oak" ? "ebony" : "walnut"}`;
       if (d.renderUrl) document.getElementById("render").src = d.renderUrl;
       const intro = `<h1>Your ${esc(d.subject)}, engraved.</h1>
         <p class="lede">${esc(d.style)}, ${esc(d.size)}, ${esc(d.frame.toLowerCase())} frame${d.version > 1 ? `. This is version ${d.version}.` : "."}</p>`;

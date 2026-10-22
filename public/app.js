@@ -5,14 +5,6 @@
   const sizeLabel = { "16x20": "16 × 20 in", "24x30": "24 × 30 in", "30x40": "30 × 40 in" };
   const label = (input) => input.closest("label").textContent.trim();
 
-  // Hero style toggle
-  document.querySelectorAll("[data-hero]").forEach((b) => {
-    b.addEventListener("click", () => {
-      $("heroImg").src = "img/framed-" + b.dataset.hero + ".jpg";
-      document.querySelectorAll("[data-hero]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
-    });
-  });
-
   // Photo / rendering comparison: drag to reveal, with one sweep when it scrolls into view.
   document.querySelectorAll(".ba").forEach((ba) => {
     const range = ba.querySelector("input[type=range]"), hint = ba.querySelector(".drag-hint");
@@ -41,7 +33,10 @@
     const collector = $("collector").checked;
     $("sCat").textContent = label(v("category"));
     $("sStyle").textContent = v("style").closest("label").querySelector("strong").textContent;
-    $("sSize").textContent = sizeLabel[size.value] + ", " + label(v("frame"));
+    const big = size.value === "30x40";
+    form.querySelector(".frames").hidden = big;
+    $("frameNote").hidden = !big;
+    $("sSize").textContent = sizeLabel[size.value] + ", " + (big ? "olive" : label(v("frame")));
     $("sColRow").hidden = !collector;
     $("total").textContent = money(Number(size.dataset.price) + (collector ? 300 : 0));
     $("pl1").textContent = $("line1").value || $("line1").placeholder;
