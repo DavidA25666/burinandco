@@ -5,14 +5,6 @@
   const sizeLabel = { "16x20": "16 × 20 in", "24x30": "24 × 30 in", "30x40": "30 × 40 in" };
   const label = (input) => input.closest("label").textContent.trim();
 
-  // Hero style toggle
-  document.querySelectorAll("[data-hero]").forEach((b) => {
-    b.addEventListener("click", () => {
-      $("heroImg").src = "img/framed-" + b.dataset.hero + ".jpg";
-      document.querySelectorAll("[data-hero]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
-    });
-  });
-
   // Photo / rendering comparison: drag to reveal, with one sweep when it scrolls into view.
   document.querySelectorAll(".ba").forEach((ba) => {
     const range = ba.querySelector("input[type=range]"), hint = ba.querySelector(".drag-hint");

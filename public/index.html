@@ -36,12 +36,16 @@
         </div>
       </div>
       <figure class="hero-art">
-        <img id="heroImg" src="img/framed-studio.jpg" alt="A framed Studio rendering of a silver Ford Mustang fastback with a brass plaque" width="1120" height="1050">
-        <div class="swatch" role="group" aria-label="Preview style">
-          <button type="button" data-hero="studio" aria-pressed="true">Studio</button>
-          <button type="button" data-hero="engraved" aria-pressed="false">Engraved</button>
-          <button type="button" data-hero="heritage" aria-pressed="false">Heritage</button>
+        <div class="ba" style="--cut:50%">
+          <img src="img/compare-photo.jpg" alt="The owner's photo: a silver Ford Mustang fastback with black stripes" width="1536" height="864">
+          <img class="after" src="img/compare-studio.jpg" alt="The finished Studio rendering of the same Mustang" width="1536" height="864">
+          <span class="lab l">Your photo</span><span class="lab r">Studio rendering</span>
+          <div class="bar"></div>
+          <p class="drag-hint" aria-hidden="true">Drag to compare</p>
+          <label class="sr" for="ba-range">Compare the photo and the rendering</label>
+          <input type="range" id="ba-range" min="0" max="100" value="50">
         </div>
+        <figcaption>A real owner's photo and the Studio rendering we drew from it.</figcaption>
       </figure>
     </div>
   </section>
@@ -151,16 +155,8 @@
         <h2>Every badge, wheel and window, exactly right.</h2>
         <p class="sub">Engraved builds every tone from fine parallel lines, the way currency and share certificates have been engraved for two centuries. Studio is drawn the way master car designers present a build: glossy marker color in your exact paint, crisp highlights and mirror chrome on clean white paper. Heritage paints it the way the great mid-century advertising artists did, with paint that looks a foot deep. Either way, the subject itself is drawn exactly as it is.</p>
       </div>
-      <div class="ba" style="--cut:50%">
-        <img src="img/compare-photo.jpg" alt="The owner's photo: a silver Ford Mustang fastback with black stripes" width="1536" height="864" loading="lazy">
-        <img class="after" src="img/compare-studio.jpg" alt="The finished Studio rendering of the same Mustang" width="1536" height="864" loading="lazy">
-        <span class="lab l">Your photo</span><span class="lab r">Studio rendering</span>
-        <div class="bar"></div>
-        <p class="drag-hint" aria-hidden="true">Drag to compare</p>
-        <label class="sr" for="ba-range">Compare the photo and the rendering</label>
-        <input type="range" id="ba-range" min="0" max="100" value="50">
-      </div>
-      <div class="pair">
+      <div class="pair trio">
+        <figure><img src="img/framed-studio.jpg" alt="Framed Studio rendering of a silver Ford Mustang fastback in an ebonized oak frame with brass plaque" width="1120" height="1050" loading="lazy"><figcaption>Studio, in ebonized oak</figcaption></figure>
         <figure><img src="img/framed-engraved.jpg" alt="Framed Engraved portrait of a Corvette Sting Ray in an American walnut frame with brass plaque" width="1120" height="1050" loading="lazy"><figcaption>Engraved, in American walnut</figcaption></figure>
         <figure><img src="img/framed-heritage.jpg" alt="Framed Heritage painting of a red Ferrari F40 in an American walnut frame with brass plaque" width="1120" height="1050" loading="lazy"><figcaption>Heritage, in American walnut</figcaption></figure>
       </div>
