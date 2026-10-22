@@ -13,6 +13,28 @@
     });
   });
 
+  // Photo / rendering comparison: drag to reveal, with one sweep when it scrolls into view.
+  document.querySelectorAll(".ba").forEach((ba) => {
+    const range = ba.querySelector("input[type=range]"), hint = ba.querySelector(".drag-hint");
+    const setCut = (v) => { ba.style.setProperty("--cut", v + "%"); range.value = v; };
+    range.addEventListener("input", () => { setCut(range.value); hint.hidden = true; ba.classList.add("used"); });
+    if (!matchMedia("(prefers-reduced-motion: reduce)").matches && "IntersectionObserver" in window) {
+      const io = new IntersectionObserver(([e]) => {
+        if (!e.isIntersecting) return;
+        io.disconnect();
+        const steps = [50, 22, 78, 50];
+        let i = 0;
+        ba.classList.add("sweeping");
+        const next = () => {
+          if (ba.classList.contains("used") || ++i >= steps.length) { ba.classList.remove("sweeping"); return; }
+          setCut(steps[i]); setTimeout(next, 900);
+        };
+        setTimeout(next, 400);
+      }, { threshold: 0.6 });
+      io.observe(ba);
+    }
+  });
+
   function update() {
     const v = (name) => form.querySelector(`input[name="${name}"]:checked`);
     const size = v("size");
