@@ -15,7 +15,7 @@
   select { width: 100%; font: inherit; padding: .7rem .8rem; border: 1.5px solid var(--line); border-radius: var(--radius); background: var(--paper); color: var(--ink); }
   .tally { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; color: var(--muted); }
   .tally strong { color: var(--ink); }
-  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-top: 1rem; }
   .grid figure { margin: 0; }
   .grid img { width: 100%; border: 1px solid var(--line); background: var(--paper); }
   .grid figcaption { font-size: .9rem; color: var(--muted); margin-top: .35rem; }
@@ -66,7 +66,7 @@
   let tests = [];
   let timer = null;
 
-  $("#style").innerHTML = [["engraved", "Engraved"], ["noir", "Noir"]]
+  $("#style").innerHTML = [["engraved", "Engraved"], ["studio", "Studio"], ["heritage", "Heritage"]]
     .map(([v, n]) => `<option value="${v}">${n}</option>`).join("");
 
   async function api(method, body, json) {

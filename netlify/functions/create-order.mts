@@ -45,7 +45,7 @@ export default async (req: Request) => {
       orderId: id,
       email,
       amount: order.price,
-      productName: `Burin & Co. ${styleInfo(style).name} engraving of your ${categoryInfo(category).subject}: ${SIZES[size].name}, ${FRAMES[frame].toLowerCase()} frame${collector ? ", collector edition" : ""}`,
+      productName: `Burin & Co. ${styleInfo(style).name} portrait of your ${categoryInfo(category).subject}: ${SIZES[size].name}, ${FRAMES[frame].toLowerCase()} frame${collector ? ", collector edition" : ""}`,
       successUrl: `${origin}/thanks.html`,
       cancelUrl: `${origin}/#commission`,
     });

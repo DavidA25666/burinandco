@@ -1,7 +1,7 @@
 import type { Config } from "@netlify/functions";
 import { getOrder, saveOrder, listOrders, log, type Order } from "../shared/store.mts";
 import { isAdmin, fileUrl, sign } from "../shared/sign.mts";
-import { triggerRender } from "../shared/render-trigger.mts";
+import { triggerRender, triggerPrintFile } from "../shared/render-trigger.mts";
 import { sendEmail, button, esc } from "../shared/email.mts";
 import { SIZES, FRAMES, styleInfo, categoryInfo } from "../shared/catalog.mts";
 
@@ -14,6 +14,7 @@ function view(o: Order, origin: string) {
     frameName: FRAMES[o.frame],
     photoUrl: fileUrl(origin, o.photoKey),
     renders: o.renders.map((r) => ({ ...r, url: fileUrl(origin, r.key) })),
+    printFileUrl: o.printFile ? fileUrl(origin, o.printFile.key) : null,
   };
 }
 
@@ -61,6 +62,14 @@ export default async (req: Request) => {
         log(order, `Proof v${version} sent to customer`);
         await saveOrder(order);
         return Response.json({ order: view(order, origin) });
+      }
+
+      case "prepare_print": {
+        if (!order.renders.length) return fail("There's no engraving to print.");
+        if (order.printStatus === "preparing") return fail("The print file is already being made.");
+        if (order.status !== "customer_approved" && order.status !== "sent_to_print" && !force) return fail("The customer hasn't approved this proof yet.");
+        await triggerPrintFile(origin, order.id);
+        return Response.json({ order: view({ ...order, printStatus: "preparing" }, origin) });
       }
 
       // No print lab is connected yet: download the file, order it from the lab, then record it here.

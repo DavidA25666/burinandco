@@ -1,9 +1,18 @@
 // Runs the illustration model on Replicate. Change REPLICATE_MODEL to try another model.
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// GPT Image only takes fixed sizes. Use its largest (16:9 or 9:16); the print step pads it to the frame shape.
+const gptSize = (aspect: string) => {
+  const [w, h] = aspect.split(":").map(Number);
+  return w >= h ? "3840x2160" : "2160x3840";
+};
+
 function inputFor(model: string, imageUrl: string, prompt: string, aspect: string) {
   if (model.includes("flux-kontext")) {
     return { prompt, input_image: imageUrl, aspect_ratio: aspect, output_format: "png" };
+  }
+  if (model.startsWith("openai/gpt-image")) {
+    return { prompt, input_images: [imageUrl], aspect_ratio: gptSize(aspect), quality: "max", output_format: "png" };
   }
   if (model.includes("nano-banana")) {
     const hiRes = model.includes("nano-banana-2") || model.includes("pro");
@@ -16,9 +25,20 @@ function inputFor(model: string, imageUrl: string, prompt: string, aspect: strin
 }
 
 export async function renderIllustration(imageUrl: string, prompt: string, aspect: string, modelOverride?: string): Promise<string> {
+  const model = modelOverride || Netlify.env.get("REPLICATE_MODEL") || "openai/gpt-image-2.5-sunburst";
+  return runModel(model, inputFor(model, imageUrl, prompt, aspect));
+}
+
+// Upscales a finished render for print. Topaz offers 2x or 4x; 2x of a 3840px render is 7680px.
+export async function upscaleForPrint(imageUrl: string): Promise<string> {
+  return runModel("topazlabs/image-upscale", {
+    image: imageUrl, upscale_factor: "2x", enhance_model: "High Fidelity V2", output_format: "png",
+  });
+}
+
+async function runModel(model: string, input: Record<string, unknown>): Promise<string> {
   const token = Netlify.env.get("REPLICATE_API_TOKEN");
   if (!token) throw new Error("REPLICATE_API_TOKEN is not set");
-  const model = modelOverride || Netlify.env.get("REPLICATE_MODEL") || "google/nano-banana-pro";
   const auth = { Authorization: `Bearer ${token}` };
 
   // Replicate throttles new predictions (hard when credit is under $5), so wait and retry on 429.
@@ -27,7 +47,7 @@ export async function renderIllustration(imageUrl: string, prompt: string, aspec
     res = await fetch(`https://api.replicate.com/v1/models/${model}/predictions`, {
       method: "POST",
       headers: { ...auth, "Content-Type": "application/json", Prefer: "wait" },
-      body: JSON.stringify({ input: inputFor(model, imageUrl, prompt, aspect) }),
+      body: JSON.stringify({ input }),
     });
     if (res.status !== 429 || attempt === 8) break;
     const body = await res.json().catch(() => ({}));
@@ -39,11 +59,11 @@ export async function renderIllustration(imageUrl: string, prompt: string, aspec
 
   const deadline = Date.now() + 12 * 60 * 1000;
   while (!["succeeded", "failed", "canceled"].includes(pred.status)) {
-    if (Date.now() > deadline) throw new Error("Rendering took longer than 12 minutes and was stopped.");
+    if (Date.now() > deadline) throw new Error("Replicate took longer than 12 minutes and was stopped.");
     await sleep(4000);
     pred = await (await fetch(pred.urls.get, { headers: auth })).json();
   }
-  if (pred.status !== "succeeded") throw new Error(pred.error ?? `Rendering ${pred.status}`);
+  if (pred.status !== "succeeded") throw new Error(pred.error ?? `Replicate run ${pred.status}`);
   const out = Array.isArray(pred.output) ? pred.output[0] : pred.output;
   if (typeof out !== "string") throw new Error("The model returned no image.");
   return out;
@@ -51,7 +71,8 @@ export async function renderIllustration(imageUrl: string, prompt: string, aspec
 
 // Models the compare page (/lab.html) runs side by side on the same photo.
 export const COMPARE_MODELS = [
-  { id: "google/nano-banana-2", name: "Nano Banana 2" },
   { id: "google/nano-banana-pro", name: "Nano Banana Pro" },
+  { id: "google/nano-banana-2.1", name: "Nano Banana 2.1" },
+  { id: "openai/gpt-image-2.5-sunburst", name: "GPT Image 2.5 Sunburst" },
   { id: "black-forest-labs/flux-kontext-max", name: "FLUX Kontext Max" },
 ];

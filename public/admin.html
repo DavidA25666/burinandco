@@ -103,7 +103,7 @@
     renderList();
     renderDetail();
     clearTimeout(timer);
-    if (orders.some((o) => o.status === "rendering" || o.status === "paid")) timer = setTimeout(() => load().catch(() => {}), 15000);
+    if (orders.some((o) => o.status === "rendering" || o.status === "paid" || o.printStatus === "preparing")) timer = setTimeout(() => load().catch(() => {}), 15000);
   }
 
   function renderList() {
@@ -175,7 +175,11 @@
         <h3>Send to print</h3>
         ${o.status === "sent_to_print" ? `<p>Sent to print${o.printOrderRef ? `: <strong>${esc(o.printOrderRef)}</strong>` : ""}.</p>` : `
         <p class="hint">${o.status === "customer_approved" ? "The customer approved v" + n + "." : "The customer hasn't approved yet."} Download the full-size file, order the print, frame and plaque from the lab, then record the lab's order number here.</p>
-        ${latest ? `<p><a href="${latest.url}" download="burin-${o.id.slice(0, 8)}-v${n}.png">Download v${n} print file</a></p>` : ""}
+        ${o.printFile ? `<p><a href="${o.printFileUrl}" download="burin-${o.id.slice(0, 8)}-v${o.printFile.version}-print.jpg">Download print file</a> (v${o.printFile.version}, ${o.printFile.width} × ${o.printFile.height} px at ${o.printFile.dpi} dpi)${o.printFile.version !== n ? ". <strong>This is from an older version; make it again.</strong>" : ""}</p>` : ""}
+        ${o.printStatus === "preparing" ? `<p>Making the print file (upscaling, then fitting to the frame). This takes a few minutes and the page refreshes on its own.</p>` : ""}
+        ${o.printStatus === "failed" ? `<p class="form-error">Print file failed: ${esc(o.printError || "")}</p>` : ""}
+        <div class="actions"><button class="btn secondary" data-act="prepare_print" ${n && o.printStatus !== "preparing" ? "" : "disabled"}>${o.printFile ? "Make the print file again" : `Make print file from v${n || ""}`}</button></div>
+        ${latest ? `<p class="hint"><a href="${latest.url}" download="burin-${o.id.slice(0, 8)}-v${n}.png">Download the original v${n} render</a> (not upscaled).</p>` : ""}
         <input type="text" id="print-ref" placeholder="Lab order number (optional)">
         ${o.status !== "customer_approved" ? `<label class="hint"><input type="checkbox" id="force"> Mark sent without customer approval</label>` : ""}
         <div class="actions"><button class="btn" data-act="mark_sent_to_print" ${canPrint ? "" : "disabled"}>Mark v${n || ""} as sent to print</button></div>`}
@@ -200,6 +204,7 @@
       body.note = $("#print-ref")?.value || "";
       if (!confirm("Mark this engraving as sent to print?")) return;
     }
+    if (action === "prepare_print") body.force = $("#force")?.checked || false;
     if (action === "send_proof" && !confirm("Email this proof to the customer?")) return;
     if (action === "archive" && !confirm("Archive this order?")) return;
     b.disabled = true; err.textContent = "";
@@ -208,7 +213,7 @@
       orders = orders.map((o) => (o.id === order.id ? order : o));
       delete shownVersion[order.id];
       renderList(); renderDetail();
-      if (order.status === "rendering") load().catch(() => {});
+      if (order.status === "rendering" || order.printStatus === "preparing") load().catch(() => {});
     } catch (ex) { err.textContent = ex.message; b.disabled = false; }
   });
 

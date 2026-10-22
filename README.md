@@ -15,7 +15,9 @@ dashboard and model-compare page as Namesake Portraits.
 5. You either **Regenerate** (with a note on what to fix) or **Send proof** to the customer.
 6. The customer opens their proof link and clicks **Approve** or **Request a change**.
    You get an email either way. Changes go back to step 5, with their note pre-filled.
-7. Once approved, download the print file from the dashboard, order the print, frame and
+7. Once approved, click **Make print file**. Topaz upscales the render 2x on Replicate, then it is
+   resized to the print at 300 dpi (240 dpi for 30 × 40) and padded to the frame shape with the
+   render's own paper. Download it from the dashboard, order the print, frame and
    brass plaque from the lab, then click **Mark as sent to print** and note the lab's order number.
    (No print lab is connected yet; FinerWorks or Prodigi can be wired in later.)
 
@@ -44,7 +46,7 @@ Set these in Netlify: **Project configuration → Environment variables**. Never
 | `STRIPE_SECRET_KEY` | Start with your `sk_test_...` key. |
 | `STRIPE_WEBHOOK_SECRET` | `whsec_...`, see below. |
 | `REPLICATE_API_TOKEN` | From Replicate. |
-| `REPLICATE_MODEL` | Optional. Default `google/nano-banana-pro`. Also supported: `google/nano-banana-2`, `black-forest-labs/flux-kontext-max`. |
+| `REPLICATE_MODEL` | Optional. Default `openai/gpt-image-2.5-sunburst`. Also supported: `google/nano-banana-pro`, `google/nano-banana-2.1`, `black-forest-labs/flux-kontext-max`. |
 | `REPLICATE_RESOLUTION` | Optional. Default `4K`. |
 
 ## Stripe webhook

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Burin & Co.</title>
-<meta name="description" content="Commissioned line engravings of your car, yacht, aircraft or building. Archival cotton paper, hardwood frame, engraved brass plaque.">
+<meta name="description" content="Commissioned fine-art portraits of your car, yacht, aircraft or building. Archival cotton paper, hardwood frame, engraved brass plaque.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Hanken+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -27,19 +27,20 @@
   <section class="hero">
     <div class="wrap hero-in">
       <div class="hero-copy">
-        <p class="eyebrow">Commissioned line engravings</p>
-        <h1>Your finest possession, engraved.</h1>
-        <p class="lede">Send us a photograph of your car, yacht, aircraft or building. We engrave it in the manner of a bank note, print it on cotton rag, and frame it in hardwood with a brass plaque bearing its name and number.</p>
+        <p class="eyebrow">Commissioned fine-art portraits</p>
+        <h1>Your finest possession, drawn by hand.</h1>
+        <p class="lede">Send us a photograph of your car, yacht, aircraft or building. We draw it line by line, as a classic engraving or in its own colors, print it on cotton rag, and frame it in hardwood with a brass plaque bearing its name and number.</p>
         <div class="hero-actions">
           <a class="btn" href="#commission">Begin a commission</a>
           <span class="from">From $395, framed, shipped free in the US</span>
         </div>
       </div>
       <figure class="hero-art">
-        <img id="heroImg" src="img/framed-noir.jpg" alt="A framed silver-on-black engraving of a classic coupe with a brass plaque" width="1120" height="850">
+        <img id="heroImg" src="img/framed-studio.jpg" alt="A framed Studio rendering of a silver Ford Mustang fastback with a brass plaque" width="1120" height="1050">
         <div class="swatch" role="group" aria-label="Preview style">
-          <button type="button" data-hero="noir" aria-pressed="true">Noir</button>
+          <button type="button" data-hero="studio" aria-pressed="true">Studio</button>
           <button type="button" data-hero="engraved" aria-pressed="false">Engraved</button>
+          <button type="button" data-hero="heritage" aria-pressed="false">Heritage</button>
         </div>
       </figure>
     </div>
@@ -54,7 +55,7 @@
       <form id="order" class="order" novalidate>
         <div class="steps">
           <fieldset>
-            <legend><span class="n">1</span> What are we engraving?</legend>
+            <legend><span class="n">1</span> What are we drawing?</legend>
             <div class="chips" role="radiogroup">
               <label><input type="radio" name="category" value="automobile" checked> Automobile</label>
               <label><input type="radio" name="category" value="yacht"> Yacht</label>
@@ -74,13 +75,18 @@
             <div class="styles">
               <label class="style">
                 <input type="radio" name="style" value="engraved" checked>
-                <img src="img/art-engraved.jpg" alt="Black line engraving of a coupe on cream paper" width="1400" height="560" loading="lazy">
+                <img src="img/art-engraved.jpg" alt="Engraved: a black Corvette Sting Ray in fine black line engraving on cream paper" width="1400" height="560" loading="lazy">
                 <span><strong>Engraved</strong> Black ink on warm cotton rag. Classic, like a vintage patent plate.</span>
               </label>
               <label class="style">
-                <input type="radio" name="style" value="noir">
-                <img src="img/art-noir.jpg" alt="Silver line engraving of a coupe on black paper" width="1400" height="560" loading="lazy">
-                <span><strong>Noir</strong> Silver lines on matte black. Dramatic and modern.</span>
+                <input type="radio" name="style" value="studio">
+                <img src="img/art-studio.jpg" alt="Studio: a silver Mustang fastback in a polished color rendering on white paper" width="1400" height="560" loading="lazy">
+                <span><strong>Studio</strong> A designer's hand rendering in your car's true color, polished like a concept-car presentation.</span>
+              </label>
+              <label class="style">
+                <input type="radio" name="style" value="heritage">
+                <img src="img/art-heritage.jpg" alt="Heritage: a red Ferrari F40 painted in gouache on an ivory backdrop" width="1400" height="560" loading="lazy">
+                <span><strong>Heritage</strong> A gouache painting in the manner of classic mid-century automotive advertising art.</span>
               </label>
             </div>
           </fieldset>
@@ -142,12 +148,21 @@
     <div class="wrap">
       <div class="sec-head">
         <p class="eyebrow">The work</p>
-        <h2>Drawn line by line, the way bank notes are.</h2>
-        <p class="sub">Every tone is built from fine parallel lines that swell and thin with the light, the same technique engravers have used on currency and share certificates for two centuries. It flatters paint, chrome, glass and hull lines.</p>
+        <h2>Every badge, wheel and window, exactly right.</h2>
+        <p class="sub">Engraved builds every tone from fine parallel lines, the way currency and share certificates have been engraved for two centuries. Studio is drawn the way master car designers present a build: glossy marker color in your exact paint, crisp highlights and mirror chrome on clean white paper. Heritage paints it the way the great mid-century advertising artists did, with paint that looks a foot deep. Either way, the subject itself is drawn exactly as it is.</p>
+      </div>
+      <div class="ba" style="--cut:50%">
+        <img src="img/compare-photo.jpg" alt="The owner's photo: a silver Ford Mustang fastback with black stripes" width="1536" height="864" loading="lazy">
+        <img class="after" src="img/compare-studio.jpg" alt="The finished Studio rendering of the same Mustang" width="1536" height="864" loading="lazy">
+        <span class="lab l">Your photo</span><span class="lab r">Studio rendering</span>
+        <div class="bar"></div>
+        <p class="drag-hint" aria-hidden="true">Drag to compare</p>
+        <label class="sr" for="ba-range">Compare the photo and the rendering</label>
+        <input type="range" id="ba-range" min="0" max="100" value="50">
       </div>
       <div class="pair">
-        <figure><img src="img/framed-engraved.jpg" alt="Framed black-on-cream engraving of a coupe in a walnut frame with brass plaque" width="1120" height="850" loading="lazy"><figcaption>Engraved, in American walnut</figcaption></figure>
-        <figure><img src="img/framed-noir.jpg" alt="Framed silver-on-black engraving of a coupe in an ebonized frame" width="1120" height="850" loading="lazy"><figcaption>Noir, in ebonized oak</figcaption></figure>
+        <figure><img src="img/framed-engraved.jpg" alt="Framed Engraved portrait of a Corvette Sting Ray in an American walnut frame with brass plaque" width="1120" height="1050" loading="lazy"><figcaption>Engraved, in American walnut</figcaption></figure>
+        <figure><img src="img/framed-heritage.jpg" alt="Framed Heritage painting of a red Ferrari F40 in an American walnut frame with brass plaque" width="1120" height="1050" loading="lazy"><figcaption>Heritage, in American walnut</figcaption></figure>
       </div>
     </div>
   </section>

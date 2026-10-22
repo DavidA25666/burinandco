@@ -6,7 +6,8 @@
     "dev": "netlify dev"
   },
   "dependencies": {
-    "@netlify/blobs": "latest"
+    "@netlify/blobs": "latest",
+    "sharp": "^0.34.4"
   },
   "devDependencies": {
     "@netlify/functions": "latest"
