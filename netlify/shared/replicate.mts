@@ -1,9 +1,16 @@
 // Runs the illustration model on Replicate. Change REPLICATE_MODEL to try another model.
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// GPT Image takes few named ratios, so ask for an explicit size near its 4K pixel limit.
+const GPT_SIZES: Record<string, string> = { "5:4": "3200x2560", "4:5": "2560x3200", "4:3": "3264x2448", "3:4": "2448x3264" };
+const gptSize = (aspect: string) => GPT_SIZES[aspect] ?? "auto";
+
 function inputFor(model: string, imageUrl: string, prompt: string, aspect: string) {
   if (model.includes("flux-kontext")) {
     return { prompt, input_image: imageUrl, aspect_ratio: aspect, output_format: "png" };
+  }
+  if (model.startsWith("openai/gpt-image")) {
+    return { prompt, input_images: [imageUrl], aspect_ratio: gptSize(aspect), quality: "max", output_format: "png" };
   }
   if (model.includes("nano-banana")) {
     const hiRes = model.includes("nano-banana-2") || model.includes("pro");
@@ -51,7 +58,7 @@ export async function renderIllustration(imageUrl: string, prompt: string, aspec
 
 // Models the compare page (/lab.html) runs side by side on the same photo.
 export const COMPARE_MODELS = [
-  { id: "google/nano-banana-2", name: "Nano Banana 2" },
   { id: "google/nano-banana-pro", name: "Nano Banana Pro" },
-  { id: "black-forest-labs/flux-kontext-max", name: "FLUX Kontext Max" },
+  { id: "google/nano-banana-2.1", name: "Nano Banana 2.1" },
+  { id: "openai/gpt-image-2.5-sunburst", name: "GPT Image 2.5 Sunburst" },
 ];
