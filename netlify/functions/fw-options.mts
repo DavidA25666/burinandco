@@ -14,7 +14,10 @@ async function fw(path: string, body: unknown = {}) {
     body: JSON.stringify(body),
   });
   const text = await res.text();
-  try { return JSON.parse(text); } catch { return { error: `${res.status} ${text.slice(0, 300)}` }; }
+  let data: any;
+  try { data = JSON.parse(text); } catch { data = {}; }
+  data.error = `HTTP ${res.status} ${text.slice(0, 300).replace(/\s+/g, " ")}`;
+  return data;
 }
 
 const n = (v: unknown) => (typeof v === "number" ? +v.toFixed(2) : v);
@@ -22,24 +25,30 @@ const n = (v: unknown) => (typeof v === "number" ? +v.toFixed(2) : v);
 export default async (req: Request) => {
   if (Netlify.context?.deploy?.context === "production") return new Response("Not found", { status: 404 });
   const part = new URL(req.url).searchParams.get("part") ?? "summary";
-  const out: string[] = [];
+  const out: string[] = [
+    `keys set: web=${!!Netlify.env.get("FINERWORKS_WEB_API_KEY")} app=${!!Netlify.env.get("FINERWORKS_APP_KEY")}`,
+  ];
+  if (part === "test") {
+    const r = await fetch(`${API}/test_my_credentials`, { headers: { web_api_key: Netlify.env.get("FINERWORKS_WEB_API_KEY") ?? "", app_key: Netlify.env.get("FINERWORKS_APP_KEY") ?? "" } });
+    out.push(`test_my_credentials: HTTP ${r.status} ${(await r.text()).slice(0, 400)}`);
+  }
 
   if (part === "summary" || part === "media") {
     const m = await fw("list_media_types");
-    out.push(`MEDIA (${m.status?.message ?? m.error ?? ""})`);
+    out.push(`MEDIA (${m.error ?? ""})`);
     for (const t of m.media_types ?? []) out.push(`media ${t.id} | type ${t.product_type_id} | ${t.name} | ${String(t.description ?? "").replace(/\s+/g, " ").slice(0, 160)}`);
   }
   if (part === "summary" || part === "finish") {
     const g = await fw("list_glazing");
-    out.push(`GLAZING (${g.status?.message ?? g.error ?? ""})`);
+    out.push(`GLAZING (${g.error ?? ""})`);
     for (const x of g.glazing ?? []) out.push(`glazing ${x.id} | ${x.name} | from $${n(x.starting_price)} | ${String(x.description ?? "").replace(/\s+/g, " ").slice(0, 160)}`);
     const m = await fw("list_mats");
-    out.push(`MATS (${m.status?.message ?? m.error ?? ""})`);
+    out.push(`MATS (${m.error ?? ""})`);
     for (const x of m.mats ?? []) out.push(`mat ${x.id} | ${x.name} | ${x.color} core ${x.core_color} | ${n(x.thickness)}in | max ${n(x.max_width)}x${n(x.max_height)}`);
   }
   if (part === "summary" || part === "frames") {
     const c = await fw("list_collections");
-    out.push(`COLLECTIONS (${c.status?.message ?? c.error ?? ""})`);
+    out.push(`COLLECTIONS (${c.error ?? ""})`);
     for (const col of c.collections ?? []) {
       out.push(`collection ${col.id} | ${col.name} | from $${n(col.starting_price)} | ${String(col.description ?? "").replace(/\s+/g, " ").slice(0, 120)}`);
       if (part === "frames") {
