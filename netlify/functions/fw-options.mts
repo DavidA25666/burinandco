@@ -34,7 +34,7 @@ export default async (req: Request) => {
   }
 
   if (part === "summary" || part === "media") {
-    const m = await fw("list_media_types");
+    const m = await fw("list_media_types", { ids: [], site_id: 2 });
     out.push(`MEDIA (${m.error ?? ""})`);
     for (const t of m.media_types ?? []) out.push(`media ${t.id} | type ${t.product_type_id} | ${t.name} | ${String(t.description ?? "").replace(/\s+/g, " ").slice(0, 160)}`);
   }
@@ -47,11 +47,14 @@ export default async (req: Request) => {
     for (const x of m.mats ?? []) out.push(`mat ${x.id} | ${x.name} | ${x.color} core ${x.core_color} | ${n(x.thickness)}in | max ${n(x.max_width)}x${n(x.max_height)}`);
   }
   if (part === "summary" || part === "frames") {
-    const c = await fw("list_collections");
+    const ids = (new URL(req.url).searchParams.get("ids") ?? "").split(",").filter(Boolean).map(Number);
+    const c = ids.length
+      ? { collections: (await Promise.all(ids.map((id) => fw("list_collections", { id })))).flatMap((r) => r.collections ?? []), error: "" }
+      : await fw("list_collections");
     out.push(`COLLECTIONS (${c.error ?? ""})`);
     for (const col of c.collections ?? []) {
       out.push(`collection ${col.id} | ${col.name} | from $${n(col.starting_price)} | ${String(col.description ?? "").replace(/\s+/g, " ").slice(0, 120)}`);
-      if (part === "frames") {
+      if (part === "frames" && ids.length) {
         for (const f of col.frames ?? []) out.push(`  frame ${f.id} | ${f.name} | ${f.color} | ${n(f.thickness)}w x ${n(f.depth)}d | max ${n(f.max_width)}x${n(f.max_height)} | ${f.type_description ?? f.type ?? ""} | level ${f.price_level}`);
       }
     }
