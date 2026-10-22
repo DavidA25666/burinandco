@@ -1,9 +1,11 @@
 // Runs the illustration model on Replicate. Change REPLICATE_MODEL to try another model.
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-// GPT Image takes few named ratios, so ask for an explicit size near its 4K pixel limit.
-const GPT_SIZES: Record<string, string> = { "5:4": "3200x2560", "4:5": "2560x3200", "4:3": "3264x2448", "3:4": "2448x3264" };
-const gptSize = (aspect: string) => GPT_SIZES[aspect] ?? "auto";
+// GPT Image only takes a fixed list of ratios, so use the closest one: 4:3 for 5:4 and 4:3 prints.
+const gptSize = (aspect: string) => {
+  const [w, h] = aspect.split(":").map(Number);
+  return w >= h ? "4:3" : "3:4";
+};
 
 function inputFor(model: string, imageUrl: string, prompt: string, aspect: string) {
   if (model.includes("flux-kontext")) {

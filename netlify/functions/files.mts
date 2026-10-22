@@ -13,10 +13,22 @@ export default async (req: Request) => {
   const url = new URL(req.url);
   const key = url.searchParams.get("k");
   if (!key || !verify(key, url.searchParams.get("s"))) return new Response("Not found", { status: 404 });
-  const data = await filesStore().get(key, { type: "arrayBuffer" });
-  if (!data) return new Response("Not found", { status: 404 });
-  return new Response(data, {
-    headers: { "Content-Type": sniff(new Uint8Array(data)), "Cache-Control": "private, max-age=3600" },
+  // Stream the file: a buffered function response is capped at 6 MB, and 4K PNG renders are often bigger.
+  const stream = await filesStore().get(key, { type: "stream" });
+  if (!stream) return new Response("Not found", { status: 404 });
+  const reader = stream.getReader();
+  const first = await reader.read();
+  if (first.done) return new Response("Not found", { status: 404 });
+  const body = new ReadableStream<Uint8Array>({
+    start(c) { c.enqueue(first.value); },
+    async pull(c) {
+      const { done, value } = await reader.read();
+      if (done) c.close(); else c.enqueue(value);
+    },
+    cancel() { reader.cancel(); },
+  });
+  return new Response(body, {
+    headers: { "Content-Type": sniff(first.value), "Cache-Control": "private, max-age=3600" },
   });
 };
 
