@@ -33,7 +33,10 @@
     const collector = $("collector").checked;
     $("sCat").textContent = label(v("category"));
     $("sStyle").textContent = v("style").closest("label").querySelector("strong").textContent;
-    $("sSize").textContent = sizeLabel[size.value] + ", " + label(v("frame"));
+    const big = size.value === "30x40";
+    form.querySelector(".frames").hidden = big;
+    $("frameNote").hidden = !big;
+    $("sSize").textContent = sizeLabel[size.value] + ", " + (big ? "olive" : label(v("frame")));
     $("sColRow").hidden = !collector;
     $("total").textContent = money(Number(size.dataset.price) + (collector ? 300 : 0));
     $("pl1").textContent = $("line1").value || $("line1").placeholder;

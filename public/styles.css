@@ -90,6 +90,7 @@ legend { font: 400 24px/1.2 var(--display); margin-bottom: 18px; padding: 0; dis
 .sizes label:has(input:checked) { border-color: var(--ink); background: var(--ink); color: var(--paper); }
 .sizes label:has(input:checked) .pr { color: var(--brass-hi); }
 .frames { margin-bottom: 14px; }
+.frame-note { margin: 0 0 14px; font-size: 15px; color: var(--muted-paper); }
 .check { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; color: var(--muted-paper); cursor: pointer; }
 .check strong { color: var(--ink); }
 .check input { margin-top: 4px; accent-color: var(--ink); width: 18px; height: 18px; flex: none; }
@@ -168,3 +169,4 @@ legend { font: 400 24px/1.2 var(--display); margin-bottom: 18px; padding: 0; dis
 
 .foot { border-top: 1px solid var(--line-night); }
 .foot-in { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding-block: 28px; font-size: 13px; color: var(--muted-night); }
+[hidden] { display: none !important; }

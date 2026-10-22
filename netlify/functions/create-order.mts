@@ -14,7 +14,8 @@ export default async (req: Request) => {
     const email = String(form.get("email") ?? "").trim().slice(0, 200);
     const style = String(form.get("style")) as StyleId;
     const size = String(form.get("size")) as SizeId;
-    const frame = String(form.get("frame")) as FrameId;
+    // 30 × 40 is too big for the 2-inch mouldings, so it always gets the wide olive frame.
+    const frame = (size === "30x40" ? "olive" : String(form.get("frame"))) as FrameId;
     const category = String(form.get("category")) as CategoryId;
     const collector = form.get("collector") === "on" || form.get("collector") === "true";
     const notes = String(form.get("notes") ?? "").trim().slice(0, 600);

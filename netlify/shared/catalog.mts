@@ -2,7 +2,7 @@
 export type StyleId = "engraved" | "studio" | "heritage";
 export type CategoryId = "automobile" | "yacht" | "aircraft" | "building" | "other";
 export type SizeId = "16x20" | "24x30" | "30x40";
-export type FrameId = "walnut" | "ebony";
+export type FrameId = "walnut" | "ebony" | "olive";
 
 interface Style {
   name: string;
@@ -96,7 +96,7 @@ export function categoryInfo(id: string) {
   return CATEGORIES[id as CategoryId] ?? CATEGORIES.other;
 }
 
-export const FRAMES: Record<FrameId, string> = { walnut: "Dark walnut", ebony: "Black oak" };
+export const FRAMES: Record<FrameId, string> = { walnut: "Dark walnut", ebony: "Black oak", olive: "Olive, 2½-inch" };
 
 export const COLLECTOR_PRICE = 30000;
 
