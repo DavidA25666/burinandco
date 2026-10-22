@@ -96,7 +96,7 @@ export function categoryInfo(id: string) {
   return CATEGORIES[id as CategoryId] ?? CATEGORIES.other;
 }
 
-export const FRAMES: Record<FrameId, string> = { walnut: "American walnut", ebony: "Ebonized oak" };
+export const FRAMES: Record<FrameId, string> = { walnut: "Dark walnut", ebony: "Black oak" };
 
 export const COLLECTOR_PRICE = 30000;
 
