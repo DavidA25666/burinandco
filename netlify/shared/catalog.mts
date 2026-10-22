@@ -101,11 +101,18 @@ export const FRAMES: Record<FrameId, string> = { walnut: "American walnut", ebon
 export const COLLECTOR_PRICE = 30000;
 
 // aspect is landscape (width:height); portrait subjects such as buildings flip it.
-export const SIZES: Record<SizeId, { name: string; price: number; aspect: string }> = {
-  "16x20": { name: "16 × 20 in", price: 39500, aspect: "5:4" },
-  "24x30": { name: "24 × 30 in", price: 69500, aspect: "5:4" },
-  "30x40": { name: "30 × 40 in", price: 125000, aspect: "4:3" },
+export const SIZES: Record<SizeId, { name: string; price: number; aspect: string; inches: [number, number]; dpi: number }> = {
+  "16x20": { name: "16 × 20 in", price: 39500, aspect: "5:4", inches: [20, 16], dpi: 300 },
+  "24x30": { name: "24 × 30 in", price: 69500, aspect: "5:4", inches: [30, 24], dpi: 300 },
+  "30x40": { name: "30 × 40 in", price: 125000, aspect: "4:3", inches: [40, 30], dpi: 240 },
 };
+
+// Pixel size of the print file (landscape width × height, flipped for portrait subjects).
+export function printPixels(size: string, category: string) {
+  const s = SIZES[size as SizeId] ?? SIZES["16x20"];
+  const [w, h] = s.inches.map((i) => i * s.dpi);
+  return { width: categoryInfo(category).portrait ? h : w, height: categoryInfo(category).portrait ? w : h, dpi: s.dpi };
+}
 
 export function aspectFor(size: string, category: string) {
   const a = (SIZES[size as SizeId] ?? SIZES["16x20"]).aspect;

@@ -15,7 +15,9 @@ dashboard and model-compare page as Namesake Portraits.
 5. You either **Regenerate** (with a note on what to fix) or **Send proof** to the customer.
 6. The customer opens their proof link and clicks **Approve** or **Request a change**.
    You get an email either way. Changes go back to step 5, with their note pre-filled.
-7. Once approved, download the print file from the dashboard, order the print, frame and
+7. Once approved, click **Make print file**. Topaz upscales the render 2x on Replicate, then it is
+   resized to the print at 300 dpi (240 dpi for 30 × 40) and padded to the frame shape with the
+   render's own paper. Download it from the dashboard, order the print, frame and
    brass plaque from the lab, then click **Mark as sent to print** and note the lab's order number.
    (No print lab is connected yet; FinerWorks or Prodigi can be wired in later.)
 

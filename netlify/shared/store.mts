@@ -29,6 +29,9 @@ export interface Order {
   } | null;
   stripeSessionId?: string;
   printOrderRef?: string;
+  printFile?: { key: string; version: number; width: number; height: number; dpi: number; createdAt: string } | null;
+  printStatus?: "preparing" | "failed";
+  printError?: string;
   lastError?: string;
   history: { at: string; event: string }[];
 }
