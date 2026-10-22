@@ -79,7 +79,7 @@ legend { font: 400 24px/1.2 var(--display); margin-bottom: 18px; padding: 0; dis
 .drop strong { color: var(--ink); }
 .drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .drop img { width: 96px; height: 72px; object-fit: cover; flex: none; }
-.styles { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.styles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .style { position: relative; cursor: pointer; border: 1px solid var(--line-paper); background: #f8f3e8; display: grid; }
 .style img { aspect-ratio: 5 / 2; object-fit: cover; width: 100%; }
 .style span { padding: 14px 16px; font-size: 14px; color: var(--muted-paper); }

@@ -27,7 +27,7 @@ function inputFor(model: string, imageUrl: string, prompt: string, aspect: strin
 export async function renderIllustration(imageUrl: string, prompt: string, aspect: string, modelOverride?: string): Promise<string> {
   const token = Netlify.env.get("REPLICATE_API_TOKEN");
   if (!token) throw new Error("REPLICATE_API_TOKEN is not set");
-  const model = modelOverride || Netlify.env.get("REPLICATE_MODEL") || "google/nano-banana-pro";
+  const model = modelOverride || Netlify.env.get("REPLICATE_MODEL") || "openai/gpt-image-2.5-sunburst";
   const auth = { Authorization: `Bearer ${token}` };
 
   // Replicate throttles new predictions (hard when credit is under $5), so wait and retry on 429.

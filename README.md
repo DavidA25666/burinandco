@@ -44,7 +44,7 @@ Set these in Netlify: **Project configuration → Environment variables**. Never
 | `STRIPE_SECRET_KEY` | Start with your `sk_test_...` key. |
 | `STRIPE_WEBHOOK_SECRET` | `whsec_...`, see below. |
 | `REPLICATE_API_TOKEN` | From Replicate. |
-| `REPLICATE_MODEL` | Optional. Default `google/nano-banana-pro`. Also supported: `google/nano-banana-2.1`, `openai/gpt-image-2.5-sunburst`, `black-forest-labs/flux-kontext-max`. |
+| `REPLICATE_MODEL` | Optional. Default `openai/gpt-image-2.5-sunburst`. Also supported: `google/nano-banana-pro`, `google/nano-banana-2.1`, `black-forest-labs/flux-kontext-max`. |
 | `REPLICATE_RESOLUTION` | Optional. Default `4K`. |
 
 ## Stripe webhook
