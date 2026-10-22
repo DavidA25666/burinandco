@@ -66,7 +66,7 @@
   let tests = [];
   let timer = null;
 
-  $("#style").innerHTML = [["engraved", "Engraved"], ["atelier", "Atelier (color)"], ["studio", "Studio marker (color, test)"]]
+  $("#style").innerHTML = [["engraved", "Engraved"], ["studio", "Studio"], ["heritage", "Heritage painting (test)"], ["blueprint", "Blueprint (test)"]]
     .map(([v, n]) => `<option value="${v}">${n}</option>`).join("");
 
   async function api(method, body, json) {

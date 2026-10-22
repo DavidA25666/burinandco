@@ -18,7 +18,7 @@
     const size = v("size");
     const collector = $("collector").checked;
     $("sCat").textContent = label(v("category"));
-    $("sStyle").textContent = v("style").value === "atelier" ? "Atelier" : "Engraved";
+    $("sStyle").textContent = v("style").value === "studio" ? "Studio" : "Engraved";
     $("sSize").textContent = sizeLabel[size.value] + ", " + label(v("frame"));
     $("sColRow").hidden = !collector;
     $("total").textContent = money(Number(size.dataset.price) + (collector ? 300 : 0));

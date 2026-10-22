@@ -1,5 +1,5 @@
 // Products, prices and prompts live here. Prices are in cents and include US shipping.
-export type StyleId = "engraved" | "atelier" | "studio";
+export type StyleId = "engraved" | "studio" | "heritage" | "blueprint";
 export type CategoryId = "automobile" | "yacht" | "aircraft" | "building" | "other";
 export type SizeId = "16x20" | "24x30" | "30x40";
 export type FrameId = "walnut" | "ebony";
@@ -23,25 +23,33 @@ export const STYLES: Partial<Record<StyleId, Style>> = {
     setting: "Show the {subject} alone, centered, with generous empty paper around it and a soft engraved ground line or shadow. Remove the background, people, other vehicles and clutter.",
     finish: "No text, lettering, signature, border or frame. Crisp lines, no blur or gray wash.",
   },
-  atelier: {
-    name: "Atelier",
-    blurb: "A precise ink drawing in your true colors, with bold sweeps of paint behind it.",
-    intro: "Turn the {subject} in this photo into a fine-art mixed-media drawing for a framed gallery print: a precise ink rendering of the {subject} in its true colors, set against bold, expressive sweeps of color.",
-    prompt: "crisp, confident black ink linework defines every edge, panel line and detail, like a master automotive or architectural designer's presentation drawing. Fill the {subject} with its exact colors from the photo (paint, trim, glass tint, wheels) in rich layered gouache and marker with clean highlights and reflections, so the color is instantly recognizable as the owner's. Behind and around it, three to five large, fast, sweeping brushstrokes of that same color plus one or two harmonious accent colors suggest motion and energy. The strokes are loose and painterly, overlap the edges of the {subject} slightly, and fade out into the paper",
-    setting: "Show the {subject} alone, centered, on warm white cotton paper with generous margins. Remove the real background, people, other vehicles and clutter; the color sweeps are the only background.",
-    finish: "No text, lettering, signature, border or frame. The {subject} itself stays sharp and exact; only the background strokes are loose. Not a watercolor, not a cartoon, not a photo filter.",
-  },
-};
-
-export const LAB_STYLES: Record<StyleId, Style> = {
-  ...(STYLES as Record<StyleId, Style>),
   studio: {
-    name: "Studio (test)",
+    name: "Studio",
     blurb: "A designer's hand rendering in your true colors, like a master custom-car presentation drawing.",
     intro: "Turn the {subject} in this photo into a masterful hand-drawn presentation rendering by a world-class automotive designer: professional alcohol marker, colored pencil and white gouache on smooth bright-white bristol board. It must look like a signed original worth thousands of dollars, framed in a collector's study.",
     prompt: "the {subject} is the entire focus, drawn with precise, confident ink outlines that taper and vary in weight, plus a few faint, light colored-pencil perspective and construction lines that extend slightly past the body edges. Render the {subject}'s exact colors from the photo with smooth, perfectly blended marker gradients, rich and saturated in the shadows and glowing toward the highlights, so the surfaces read as deep, glossy, freshly polished paint. Crisp white gouache highlights trace the sharp body lines, panel edges and roof line, with a few bright starburst glints. A thin, cool reflected-sky edge light runs along the upper edges. Glass is dark and tinted with clean reflections and a hint of the interior. Wheels, tires, chrome, badges, lights and grille are rendered in meticulous, realistic detail with mirror-like chrome. Studio lighting from above, elegant and refined, never messy",
     setting: "Show the {subject} complete and centered on clean, bright white paper with generous empty margins all around. The only things besides the {subject} are a soft, dark grey shadow directly beneath it and a few short, subtle ground-plane pencil lines. The background is otherwise completely blank white: no streaks, swooshes, color swipes, splashes, gradients, scenery or backdrop.",
     finish: "No text, lettering, signature, logo, border or frame. Keep the {subject} exact: do not lower, widen, restyle, customize or exaggerate it. Not a photo filter, not a cartoon, not a watercolor, not a rough sketch.",
+  },
+};
+
+export const LAB_STYLES: Record<StyleId, Style> = {
+  ...(STYLES as Record<StyleId, Style>),
+  heritage: {
+    name: "Heritage (test)",
+    blurb: "A painted portrait in the manner of classic mid-century automotive advertising art.",
+    intro: "Turn the {subject} in this photo into an original fine-art gouache painting in the tradition of the great 1950s and 1960s automotive advertising illustrators, painted by a master for a collector, suitable for framing as a gallery print.",
+    prompt: "smooth, opaque gouache with invisible brushwork and razor-sharp edges, every surface idealized but true. The {subject} keeps its exact colors from the photo, painted with deep, luminous, high-gloss reflections that make the paint look a foot deep. Chrome and glass are painted with crisp, jewel-like reflections and clean highlights. Details such as wheels, badges, lights, grille and trim are painted precisely. Warm, flattering late-afternoon light",
+    setting: "Show the {subject} complete and centered on a smooth, softly graduated warm ivory-to-pale-grey backdrop with a soft, natural shadow beneath it. No scenery, people, other vehicles, streaks, swooshes or color splashes.",
+    finish: "No text, lettering, signature, logo, border or frame. Keep the {subject} exact: do not lower, widen, restyle, customize or elongate it. Not a photograph, not a 3D render, not a cartoon, not a watercolor.",
+  },
+  blueprint: {
+    name: "Blueprint (test)",
+    blurb: "A precise technical drawing in white line on deep blueprint blue.",
+    intro: "Turn the {subject} in this photo into an elegant, museum-quality technical presentation drawing in the style of a vintage engineering blueprint, suitable for framing as a fine-art print.",
+    prompt: "fine, crisp white and pale-blue technical linework on deep Prussian blueprint blue paper with a subtle paper texture. Outline every panel line, window, wheel spoke, light, vent and piece of trim exactly, with thin hatching for shading and a few faint construction and center lines. Line weights vary: bold silhouette, finer interior detail",
+    setting: "Show the {subject} complete and centered from the same angle as the photo, with generous empty blue paper around it and a faint ground line beneath it. No other views, scenery, people or other vehicles.",
+    finish: "No text, lettering, dimensions, numbers, title block, signature, logo, border or frame. Keep the {subject} exact: do not restyle, customize or exaggerate it. Not a photo filter or a cartoon.",
   },
 };
 
@@ -54,6 +62,14 @@ const RETIRED: Record<string, Style> = {
     prompt: "silver-white engraved lines on matte black paper, so the lines represent light rather than shadow. Every tone is built from fine parallel lines that swell where the light is strongest and fade into the black paper in shadow. Let the lines follow the curves and planes of the {subject}. Show reflections on paint, metal and glass as clean streaks",
     setting: LAB_STYLES.engraved.setting,
     finish: LAB_STYLES.engraved.finish,
+  },
+  atelier: {
+    name: "Atelier",
+    blurb: "A precise ink drawing in your true colors, with bold sweeps of paint behind it.",
+    intro: "Turn the {subject} in this photo into a fine-art mixed-media drawing for a framed gallery print: a precise ink rendering of the {subject} in its true colors, set against bold, expressive sweeps of color.",
+    prompt: "crisp, confident black ink linework defines every edge, panel line and detail, like a master automotive or architectural designer's presentation drawing. Fill the {subject} with its exact colors from the photo (paint, trim, glass tint, wheels) in rich layered gouache and marker with clean highlights and reflections, so the color is instantly recognizable as the owner's. Behind and around it, three to five large, fast, sweeping brushstrokes of that same color plus one or two harmonious accent colors suggest motion and energy. The strokes are loose and painterly, overlap the edges of the {subject} slightly, and fade out into the paper",
+    setting: "Show the {subject} alone, centered, on warm white cotton paper with generous margins. Remove the real background, people, other vehicles and clutter; the color sweeps are the only background.",
+    finish: "No text, lettering, signature, border or frame. The {subject} itself stays sharp and exact; only the background strokes are loose. Not a watercolor, not a cartoon, not a photo filter.",
   },
 };
 
