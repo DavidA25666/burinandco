@@ -34,7 +34,8 @@ export default async (req: Request) => {
   }
 
   if (part === "summary" || part === "media") {
-    const m = await fw("list_media_types", { ids: [], site_id: 2 });
+    const m = await fw(new URL(req.url).searchParams.get("op") ?? "list_media_types", JSON.parse(new URL(req.url).searchParams.get("body") ?? "{\"site_id\":2}"));
+    if (!m.media_types) out.push(m.error);
     out.push(`MEDIA (${(m.media_types ?? []).length} total)`);
     const q = (new URL(req.url).searchParams.get("q") ?? "").toLowerCase();
     for (const t of (m.media_types ?? []).filter((t: any) => !q || `${t.name} ${t.description}`.toLowerCase().includes(q))) out.push(`media ${t.id} | type ${t.product_type_id} | ${t.name} | ${String(t.description ?? "").replace(/\s+/g, " ").slice(0, 160)}`);
