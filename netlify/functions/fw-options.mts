@@ -35,8 +35,9 @@ export default async (req: Request) => {
 
   if (part === "summary" || part === "media") {
     const m = await fw("list_media_types", { ids: [], site_id: 2 });
-    out.push(`MEDIA (${m.error ?? ""})`);
-    for (const t of m.media_types ?? []) out.push(`media ${t.id} | type ${t.product_type_id} | ${t.name} | ${String(t.description ?? "").replace(/\s+/g, " ").slice(0, 160)}`);
+    out.push(`MEDIA (${(m.media_types ?? []).length} total)`);
+    const q = (new URL(req.url).searchParams.get("q") ?? "").toLowerCase();
+    for (const t of (m.media_types ?? []).filter((t: any) => !q || `${t.name} ${t.description}`.toLowerCase().includes(q))) out.push(`media ${t.id} | type ${t.product_type_id} | ${t.name} | ${String(t.description ?? "").replace(/\s+/g, " ").slice(0, 160)}`);
   }
   if (part === "summary" || part === "finish") {
     const g = await fw("list_glazing");
