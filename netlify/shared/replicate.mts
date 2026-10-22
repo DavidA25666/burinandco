@@ -63,4 +63,5 @@ export const COMPARE_MODELS = [
   { id: "google/nano-banana-pro", name: "Nano Banana Pro" },
   { id: "google/nano-banana-2.1", name: "Nano Banana 2.1" },
   { id: "openai/gpt-image-2.5-sunburst", name: "GPT Image 2.5 Sunburst" },
+  { id: "black-forest-labs/flux-kontext-max", name: "FLUX Kontext Max" },
 ];
