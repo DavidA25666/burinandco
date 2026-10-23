@@ -1,8 +1,9 @@
 import type { Config } from "@netlify/functions";
 import { getOrder, saveOrder, log } from "../shared/store.mts";
-import { verify, fileUrl } from "../shared/sign.mts";
+import { verify } from "../shared/sign.mts";
+import { chargeSavedCard, createPaymentCheckout, StripeError } from "../shared/stripe.mts";
 import { notifyOwner, button, esc } from "../shared/email.mts";
-import { SIZES, FRAMES, styleInfo, categoryInfo } from "../shared/catalog.mts";
+import { SIZES, FRAMES, styleInfo, categoryInfo, productName } from "../shared/catalog.mts";
 
 export default async (req: Request) => {
   const url = new URL(req.url);
@@ -25,23 +26,61 @@ export default async (req: Request) => {
       subject: categoryInfo(order.category).subject,
       plaque: order.plaque,
       version: order.renders.length,
-      renderUrl: latest ? fileUrl(origin, latest.key) : null,
-      awaitingResponse: order.status === "proof_sent",
+      renderUrl: latest ? `${origin}/api/proof-image?o=${order.id}&t=${encodeURIComponent(token)}&v=${order.renders.length}` : null,
+      price: order.price,
+      // Orders from before proof-first payment were paid at checkout.
+      prepaid: !order.card,
+      awaitingResponse: order.status === "proof_sent" || order.status === "payment_due",
+      paymentDue: order.status === "payment_due",
     });
   }
 
-  if (order.status !== "proof_sent") {
+  const awaiting = order.status === "proof_sent" || (order.status === "payment_due" && body.action === "approve");
+  if (!awaiting) {
     return Response.json({ error: "We already have your response to this proof. We'll email you if we need anything else." }, { status: 409 });
   }
   const admin = button(`${origin}/admin.html#${order.id}`, "Open dashboard");
+  const amount = `$${(order.price / 100).toFixed(2)}`;
 
   if (body.action === "approve") {
+    const v = order.renders.length;
+    if (order.card && order.status === "proof_sent") {
+      order.chargeAttempts = (order.chargeAttempts ?? 0) + 1;
+      try {
+        const pi = await chargeSavedCard({
+          orderId: order.id, customer: order.card.customer, paymentMethod: order.card.paymentMethod,
+          amount: order.price, description: productName(order), email: order.customer.email, attempt: order.chargeAttempts,
+        });
+        if (pi.status !== "succeeded") throw new StripeError(`Payment ${pi.status}`, pi.status);
+        order.paymentIntentId = pi.id;
+        order.paidAt = new Date().toISOString();
+        log(order, `Customer approved version ${v}; charged ${amount}`);
+      } catch (e) {
+        if (!(e instanceof StripeError)) throw e;
+        // Declined, or the bank wants the customer to confirm: send them to a normal payment page.
+        order.status = "payment_due";
+        log(order, `Customer approved version ${v}; saved card not charged (${e.message})`);
+      }
+    } else if (!order.card) {
+      log(order, `Customer approved version ${v}`);
+    }
+
+    if (order.status === "payment_due") {
+      const session = await createPaymentCheckout({
+        orderId: order.id, customer: order.card?.customer, email: order.customer.email, amount: order.price,
+        productName: productName(order),
+        successUrl: `${origin}/proof.html?o=${order.id}&t=${encodeURIComponent(token)}`,
+        cancelUrl: `${origin}/proof.html?o=${order.id}&t=${encodeURIComponent(token)}`,
+      });
+      await saveOrder(order);
+      return Response.json({ status: order.status, checkoutUrl: session.url });
+    }
+
     order.status = "customer_approved";
-    log(order, `Customer approved version ${order.renders.length}`);
     await saveOrder(order);
     await notifyOwner(
-      `Approved: ${order.customer.name}'s engraving is ready to print`,
-      `<p>${esc(order.customer.name)} approved version ${order.renders.length}. Download the print file and order it from the print lab, then mark it sent in your dashboard.</p>${admin}`,
+      `Approved: ${order.customer.name}'s portrait is ready to print`,
+      `<p>${esc(order.customer.name)} approved version ${v}${order.card ? ` and their card was charged ${amount}` : ""}. Download the print file and order it from the print lab, then mark it sent in your dashboard.</p>${admin}`,
     );
     return Response.json({ status: order.status });
   }

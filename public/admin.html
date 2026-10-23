@@ -72,14 +72,17 @@
   let timer = null;
 
   const STATUS = {
+    awaiting_card: ["No card yet", ""],
     awaiting_payment: ["Unpaid", ""],
+    card_saved: ["Card saved, starting render", ""],
     paid: ["Paid, starting render", ""],
     rendering: ["Rendering", ""],
     render_failed: ["Render failed", "bad"],
     needs_review: ["Needs your review", "act"],
     proof_sent: ["Waiting on customer", ""],
     changes_requested: ["Changes requested", "act"],
-    customer_approved: ["Approved, send to print", "act"],
+    payment_due: ["Approved, card declined", "bad"],
+    customer_approved: ["Approved and paid, send to print", "act"],
     sent_to_print: ["Sent to print", "done"],
     archived: ["Archived", ""],
   };
@@ -103,7 +106,7 @@
     renderList();
     renderDetail();
     clearTimeout(timer);
-    if (orders.some((o) => o.status === "rendering" || o.status === "paid" || o.printStatus === "preparing")) timer = setTimeout(() => load().catch(() => {}), 15000);
+    if (orders.some((o) => o.status === "rendering" || o.status === "paid" || o.status === "card_saved" || o.printStatus === "preparing")) timer = setTimeout(() => load().catch(() => {}), 15000);
   }
 
   function renderList() {
@@ -129,7 +132,7 @@
     const a = o.shipping?.address;
     const lastReq = o.changeRequests.at(-1);
     const canSendProof = n > 0 && ["needs_review", "proof_sent", "changes_requested"].includes(o.status);
-    const canRegen = !["rendering", "sent_to_print", "awaiting_payment"].includes(o.status);
+    const canRegen = !["rendering", "sent_to_print", "awaiting_payment", "awaiting_card"].includes(o.status);
     const canPrint = o.status !== "sent_to_print" && n > 0;
     const latest = o.renders[n - 1];
 
@@ -152,7 +155,7 @@
           ${n ? `<div class="versions">${o.renders.map((_, i) => `<button data-v="${i + 1}" aria-pressed="${i + 1 === v}">v${i + 1}</button>`).join("")}</div>
             <a href="${r.url}" target="_blank" rel="noopener"><img src="${r.url}" alt="Engraving version ${v}"></a>
             <figcaption>Version ${v}${r.note ? `: ${esc(r.note)}` : ""}. Click to open full size.</figcaption>`
-          : `<p>${o.status === "rendering" || o.status === "paid" ? "Rendering… this page refreshes on its own." : "No engraving yet."}</p>`}
+          : `<p>${o.status === "rendering" || o.status === "paid" || o.status === "card_saved" ? "Rendering… this page refreshes on its own." : "No engraving yet."}</p>`}
         </figure>
       </div>
 
@@ -181,7 +184,7 @@
         <div class="actions"><button class="btn secondary" data-act="prepare_print" ${n && o.printStatus !== "preparing" ? "" : "disabled"}>${o.printFile ? "Make the print file again" : `Make print file from v${n || ""}`}</button></div>
         ${latest ? `<p class="hint"><a href="${latest.url}" download="burin-${o.id.slice(0, 8)}-v${n}.png">Download the original v${n} render</a> (not upscaled).</p>` : ""}
         <input type="text" id="print-ref" placeholder="Lab order number (optional)">
-        ${o.status !== "customer_approved" ? `<label class="hint"><input type="checkbox" id="force"> Mark sent without customer approval</label>` : ""}
+        ${o.status !== "customer_approved" ? `<label class="hint"><input type="checkbox" id="force"> Mark sent without customer approval (their card is not charged)</label>` : ""}
         <div class="actions"><button class="btn" data-act="mark_sent_to_print" ${canPrint ? "" : "disabled"}>Mark v${n || ""} as sent to print</button></div>`}
       </div>
 

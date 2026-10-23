@@ -28,7 +28,7 @@ export default async (req: Request) => {
     if (req.method === "GET") {
       const showAll = new URL(req.url).searchParams.get("all") === "1";
       const orders = (await listOrders()).filter(
-        (o) => showAll || (o.status !== "archived" && o.status !== "awaiting_payment"),
+        (o) => showAll || (o.status !== "archived" && o.status !== "awaiting_payment" && o.status !== "awaiting_card"),
       );
       return Response.json({ orders: orders.map((o) => view(o, origin)) });
     }
@@ -55,7 +55,7 @@ export default async (req: Request) => {
           to: order.customer.email,
           replyTo: Netlify.env.get("OWNER_EMAIL"),
           subject: version > 1 ? "Your updated Burin & Co. proof" : "Your Burin & Co. proof is ready",
-          html: `<p>${first},</p><p>${version > 1 ? "We've updated your engraving based on your notes." : `The engraving of your ${subject} is ready for your review.`} Approve it and we'll print, frame and plaque it. If anything is off, tell us what to change.</p>${button(link, "Review your proof")}<p>Nothing prints until you approve it.</p><p>Burin &amp; Co.</p>`,
+          html: `<p>${first},</p><p>${version > 1 ? "We've updated your engraving based on your notes." : `The engraving of your ${subject} is ready for your review.`} Approve it and we'll print, frame and plaque it. If anything is off, tell us what to change.</p>${button(link, "Review your proof")}<p>${order.card ? `Your card is charged $${(order.price / 100).toFixed(2)} only when you approve. Changes cost nothing.` : "Nothing prints until you approve it."}</p><p>Burin &amp; Co.</p>`,
         });
         if (!sent) return fail("The email didn't send. Check RESEND_API_KEY and FROM_EMAIL in Netlify.", 502);
         order.status = "proof_sent";

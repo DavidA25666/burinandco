@@ -92,7 +92,7 @@
 
     const btn = $("pay");
     btn.disabled = true;
-    btn.textContent = "Opening secure checkout…";
+    btn.textContent = "Opening secure card page…";
     try {
       const res = await fetch("/api/orders", { method: "POST", body: new FormData(form) });
       const data = await res.json().catch(() => ({}));
@@ -101,7 +101,7 @@
     } catch (ex) {
       showError(ex.message);
       btn.disabled = false;
-      btn.textContent = "Continue to payment";
+      btn.textContent = "Continue to request my proof";
     }
   });
 

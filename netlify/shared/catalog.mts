@@ -134,3 +134,7 @@ export function buildPrompt(style: string, category: string, customerNotes?: str
   if (adjustment) lines.push(`Adjustments for this version: ${adjustment}`);
   return lines.join("\n");
 }
+
+export function productName(o: { style: string; category: string; size: SizeId; frame: FrameId; collector: boolean }) {
+  return `Burin & Co. ${styleInfo(o.style).name} portrait of your ${categoryInfo(o.category).subject}: ${SIZES[o.size].name}, ${FRAMES[o.frame].toLowerCase()} frame${o.collector ? ", collector edition" : ""}`;
+}

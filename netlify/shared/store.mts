@@ -2,8 +2,8 @@ import { getStore, getDeployStore } from "@netlify/blobs";
 import type { StyleId, CategoryId, SizeId, FrameId } from "./catalog.mts";
 
 export type OrderStatus =
-  | "awaiting_payment" | "paid" | "rendering" | "render_failed" | "needs_review"
-  | "proof_sent" | "changes_requested" | "customer_approved" | "sent_to_print" | "archived";
+  | "awaiting_card" | "card_saved" | "awaiting_payment" | "paid" | "rendering" | "render_failed" | "needs_review"
+  | "proof_sent" | "changes_requested" | "payment_due" | "customer_approved" | "sent_to_print" | "archived";
 
 export interface Order {
   id: string;
@@ -28,6 +28,11 @@ export interface Order {
     address: { line1: string; line2?: string | null; city: string; state: string; postal_code: string; country: string };
   } | null;
   stripeSessionId?: string;
+  // Card saved at order time and charged when the customer approves the proof.
+  card?: { customer: string; paymentMethod: string } | null;
+  chargeAttempts?: number;
+  paymentIntentId?: string;
+  paidAt?: string;
   printOrderRef?: string;
   printFile?: { key: string; version: number; width: number; height: number; dpi: number; createdAt: string } | null;
   printStatus?: "preparing" | "failed";

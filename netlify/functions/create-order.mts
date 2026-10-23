@@ -1,7 +1,7 @@
 import type { Config } from "@netlify/functions";
-import { STYLES, SIZES, FRAMES, CATEGORIES, COLLECTOR_PRICE, type StyleId, type SizeId, type FrameId, type CategoryId, styleInfo, categoryInfo } from "../shared/catalog.mts";
+import { STYLES, SIZES, FRAMES, CATEGORIES, COLLECTOR_PRICE, type StyleId, type SizeId, type FrameId, type CategoryId, productName } from "../shared/catalog.mts";
 import { filesStore, saveOrder, type Order } from "../shared/store.mts";
-import { createCheckout } from "../shared/stripe.mts";
+import { createCardSetup } from "../shared/stripe.mts";
 
 const bad = (error: string, status = 400) => Response.json({ error }, { status });
 
@@ -35,18 +35,19 @@ export default async (req: Request) => {
     await filesStore().set(photoKey, await photo.arrayBuffer());
 
     const order: Order = {
-      id, createdAt: new Date().toISOString(), status: "awaiting_payment",
+      id, createdAt: new Date().toISOString(), status: "awaiting_card",
       customer: { name, email }, category, style, size, frame, collector,
       price: SIZES[size].price + (collector ? COLLECTOR_PRICE : 0), notes, plaque,
       photoKey, renders: [], changeRequests: [], history: [{ at: new Date().toISOString(), event: "Order started" }],
     };
 
     const origin = new URL(req.url).origin;
-    const session = await createCheckout({
+    const session = await createCardSetup({
       orderId: id,
+      name,
       email,
       amount: order.price,
-      productName: `Burin & Co. ${styleInfo(style).name} portrait of your ${categoryInfo(category).subject}: ${SIZES[size].name}, ${FRAMES[frame].toLowerCase()} frame${collector ? ", collector edition" : ""}`,
+      productName: productName(order),
       successUrl: `${origin}/thanks.html`,
       cancelUrl: `${origin}/#commission`,
     });
