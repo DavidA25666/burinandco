@@ -2,7 +2,7 @@
   const $ = (id) => document.getElementById(id);
   const form = $("order");
   const money = (n) => "$" + n.toLocaleString("en-US");
-  const sizeLabel = { "16x20": "16 × 20 in", "24x30": "24 × 30 in", "30x40": "30 × 40 in" };
+  const sizeLabel = { "12x16": "16 × 12 in", "16x20": "20 × 16 in", "24x30": "30 × 24 in" };
   const label = (input) => input.closest("label").textContent.trim();
 
   // Photo / rendering comparison: drag to reveal, with one sweep when it scrolls into view.
@@ -32,7 +32,6 @@
     car: { src: "compare", w: 1536, h: 864, what: "a silver Ford Mustang fastback with black stripes", cap: "A real owner's photo of a Ford Mustang fastback, and the Studio rendering we drew from it." },
     yacht: { src: "compare-yacht", w: 1536, h: 864, what: "a motor yacht underway", cap: "A photo of a motor yacht at sea, and the Studio rendering we drew from it." },
     jet: { src: "compare-jet", w: 1536, h: 864, what: "a private jet", cap: "A photo of a private jet, and the Studio rendering we drew from it." },
-    bldg: { src: "compare-bldg", w: 1080, h: 1350, what: "a commercial building", cap: "A photo of a commercial building, and the Studio rendering we drew from it." },
   };
   const heroBa = $("heroBa");
   document.querySelectorAll("[data-ba]").forEach((btn) => btn.addEventListener("click", () => {
@@ -53,10 +52,7 @@
     const size = v("size");
     $("sCat").textContent = label(v("category"));
     $("sStyle").textContent = v("style").closest("label").querySelector("strong").textContent;
-    const big = size.value === "30x40";
-    form.querySelector(".frames").hidden = big;
-    $("frameNote").hidden = !big;
-    $("sSize").textContent = sizeLabel[size.value] + ", " + (big ? "olive" : label(v("frame")));
+    $("sSize").textContent = sizeLabel[size.value] + ", " + label(v("frame"));
     $("total").textContent = money(Number(size.dataset.price));
   }
   form.addEventListener("input", update);

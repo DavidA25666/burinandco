@@ -94,7 +94,7 @@ legend { font: 400 24px/1.2 var(--display); margin-bottom: 18px; padding: 0; dis
 .sizes label:has(input:checked) { border-color: var(--ink); background: var(--ink); color: var(--paper); }
 .sizes label:has(input:checked) .pr { color: var(--brass-hi); }
 .frames { margin-bottom: 14px; }
-.frame-note { margin: 0 0 14px; font-size: 15px; color: var(--muted-paper); }
+.sizes .tag { position: absolute; top: -9px; right: 10px; padding: 2px 8px; font: 500 11px/1.4 var(--mono); letter-spacing: .06em; text-transform: uppercase; background: var(--brass-hi); color: var(--ink); }
 .check { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; color: var(--muted-paper); cursor: pointer; }
 .check strong { color: var(--ink); }
 .check input { margin-top: 4px; accent-color: var(--ink); width: 18px; height: 18px; flex: none; }

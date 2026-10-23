@@ -14,8 +14,7 @@ export default async (req: Request) => {
     const email = String(form.get("email") ?? "").trim().slice(0, 200);
     const style = String(form.get("style")) as StyleId;
     const size = String(form.get("size")) as SizeId;
-    // 30 × 40 is too big for the 2-inch mouldings, so it always gets the wide olive frame.
-    const frame = (size === "30x40" ? "olive" : String(form.get("frame"))) as FrameId;
+    const frame = String(form.get("frame")) as FrameId;
     const category = String(form.get("category")) as CategoryId;
     const ship = (k: string, max = 100) => String(form.get(`ship_${k}`) ?? "").replace(/[\n\r]/g, " ").trim().slice(0, max);
     const shipping = {
@@ -33,7 +32,7 @@ export default async (req: Request) => {
     if (!shipping.name || !shipping.address.line1 || !shipping.address.city) return bad("Add the shipping name and address.");
     if (!/^[A-Z]{2}$/.test(shipping.address.state)) return bad("Use the two-letter state code, like MA.");
     if (!/^\d{5}(-\d{4})?$/.test(shipping.address.postal_code)) return bad("Check the ZIP code.");
-    if (!STYLES[style] || !SIZES[size] || !FRAMES[frame] || !CATEGORIES[category]) return bad("Choose a subject, style, size and frame.");
+    if (!STYLES[style] || !SIZES[size] || SIZES[size].retired || !FRAMES[frame] || frame === "olive" || !CATEGORIES[category]) return bad("Choose a subject, style, size and frame.");
 
     const id = crypto.randomUUID();
     const photoKey = `photo/${id}`;
