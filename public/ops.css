@@ -1,16 +1,16 @@
 /* Shared by the admin, compare, proof and thank-you pages. The storefront uses styles.css. */
 :root {
-  --paper: #FBF8F1;   /* page background */
-  --wall: #F1EADB;    /* bands and panels: cotton rag */
+  --paper: #FBFBF9;   /* page background */
+  --wall: #F3F1EC;    /* bands and panels */
   --ink: #1D1B17;
   --door: #1D1B17;    /* accent: engraver's ink */
-  --brass: #B8955A;   /* plaque brass, used sparingly */
-  --muted: #6B6457;
-  --line: #D7CDB8;
+  --brass: #6B1D1D;   /* oxblood, used sparingly */
+  --muted: #6C675F;
+  --line: #D8D4CC;
   --error: #9B2C2C;
-  --display: "Bodoni Moda", Didot, Georgia, serif;
-  --body: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
-  --serif: "Bodoni Moda", Didot, Georgia, serif;
+  --display: "IM Fell English", "Iowan Old Style", Georgia, serif;
+  --body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --serif: "IM Fell English", "Iowan Old Style", Georgia, serif;
   --radius: 2px;
 }
 *, *::before, *::after { box-sizing: border-box; }
@@ -20,7 +20,7 @@ img { max-width: 100%; display: block; }
 a { color: var(--door); text-underline-offset: 3px; }
 :focus-visible { outline: 3px solid var(--door); outline-offset: 3px; }
 
-h1, h2, h3 { font-family: var(--display); font-weight: 400; line-height: 1.1; margin: 0 0 .5em; letter-spacing: -.02em; text-wrap: balance; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; line-height: 1.1; margin: 0 0 .5em; letter-spacing: 0; text-wrap: balance; }
 h1 { font-size: clamp(2.2rem, 5vw, 3.6rem); }
 h2 { font-size: clamp(1.6rem, 3.2vw, 2.4rem); }
 h3 { font-size: 1.15rem; letter-spacing: -.01em; }
