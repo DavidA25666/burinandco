@@ -52,6 +52,10 @@ nav .nav-cta:hover { color: var(--night); background: var(--brass-hi); }
 .from { font: 400 13px/1.4 var(--mono); color: var(--muted-night); }
 .hero-art { margin: 0; position: relative; }
 .hero-art .ba { box-shadow: 0 30px 60px -20px rgba(0,0,0,.6), 0 0 0 1px var(--line-night); }
+.ba-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.ba-tabs button { font: 500 12px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted-night); background: none; border: 1px solid var(--line-night); padding: 9px 13px; cursor: pointer; }
+.ba-tabs button[aria-pressed="true"] { color: var(--night); background: var(--brass); border-color: var(--brass); }
+#heroBa { aspect-ratio: var(--ar, 16 / 9); max-height: 72vh; margin-inline: auto; }
 .hero-art figcaption { font: 400 13px/1.4 var(--mono); color: var(--muted-night); margin-top: 14px; }
 @media (max-width: 900px) { .hero-in { grid-template-columns: 1fr; gap: 36px; padding-block: 40px 48px; } }
 

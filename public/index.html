@@ -36,7 +36,13 @@
         </div>
       </div>
       <figure class="hero-art">
-        <div class="ba" style="--cut:50%">
+        <div class="ba-tabs" role="group" aria-label="Choose an example">
+          <button type="button" data-ba="car" aria-pressed="true">Car</button>
+          <button type="button" data-ba="yacht" aria-pressed="false">Yacht</button>
+          <button type="button" data-ba="jet" aria-pressed="false">Aircraft</button>
+          <button type="button" data-ba="bldg" aria-pressed="false">Building</button>
+        </div>
+        <div class="ba" id="heroBa" style="--cut:50%">
           <img src="img/compare-photo.jpg" alt="The owner's photo: a silver Ford Mustang fastback with black stripes" width="1536" height="864">
           <img class="after" src="img/compare-studio.jpg" alt="The finished Studio rendering of the same Mustang" width="1536" height="864">
           <span class="lab l">Your photo</span><span class="lab r">Studio rendering</span>
@@ -45,7 +51,7 @@
           <label class="sr" for="ba-range">Compare the photo and the rendering</label>
           <input type="range" id="ba-range" min="0" max="100" value="50">
         </div>
-        <figcaption>A real owner's photo and the Studio rendering we drew from it.</figcaption>
+        <figcaption id="baCap">A real owner's photo of a Ford Mustang fastback, and the Studio rendering we drew from it.</figcaption>
       </figure>
     </div>
   </section>

@@ -27,6 +27,27 @@
     }
   });
 
+  // Hero examples: one slider, with a tab per subject.
+  const examples = {
+    car: { src: "compare", w: 1536, h: 864, what: "a silver Ford Mustang fastback with black stripes", cap: "A real owner's photo of a Ford Mustang fastback, and the Studio rendering we drew from it." },
+    yacht: { src: "compare-yacht", w: 1536, h: 864, what: "a motor yacht underway", cap: "A photo of a motor yacht at sea, and the Studio rendering we drew from it." },
+    jet: { src: "compare-jet", w: 1536, h: 864, what: "a private jet", cap: "A photo of a private jet, and the Studio rendering we drew from it." },
+    bldg: { src: "compare-bldg", w: 1080, h: 1350, what: "a commercial building", cap: "A photo of a commercial building, and the Studio rendering we drew from it." },
+  };
+  const heroBa = $("heroBa");
+  document.querySelectorAll("[data-ba]").forEach((btn) => btn.addEventListener("click", () => {
+    const ex = examples[btn.dataset.ba];
+    const [photo, art] = heroBa.querySelectorAll("img");
+    photo.src = `img/${ex.src}-photo.jpg`; photo.alt = `The owner's photo: ${ex.what}`;
+    art.src = `img/${ex.src}-studio.jpg`; art.alt = `The finished Studio rendering of ${ex.what}`;
+    for (const img of [photo, art]) { img.width = ex.w; img.height = ex.h; }
+    heroBa.style.setProperty("--ar", `${ex.w} / ${ex.h}`);
+    heroBa.style.setProperty("--cut", "50%");
+    heroBa.querySelector("input[type=range]").value = 50;
+    $("baCap").textContent = ex.cap;
+    document.querySelectorAll("[data-ba]").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+  }));
+
   function update() {
     const v = (name) => form.querySelector(`input[name="${name}"]:checked`);
     const size = v("size");
