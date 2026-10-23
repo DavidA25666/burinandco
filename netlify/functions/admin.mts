@@ -4,6 +4,7 @@ import { isAdmin, fileUrl, sign } from "../shared/sign.mts";
 import { triggerRender, triggerPrintFile } from "../shared/render-trigger.mts";
 import { sendEmail, button, esc } from "../shared/email.mts";
 import { SIZES, FRAMES, styleInfo, categoryInfo } from "../shared/catalog.mts";
+import { cleanCaption } from "../shared/caption.mts";
 
 function view(o: Order, origin: string) {
   return {
@@ -80,6 +81,16 @@ export default async (req: Request) => {
         order.printOrderRef = String(note ?? "").trim().slice(0, 120) || undefined;
         order.status = "sent_to_print";
         log(order, `Sent to print${order.printOrderRef ? ` (${order.printOrderRef})` : ""}`);
+        await saveOrder(order);
+        return Response.json({ order: view(order, origin) });
+      }
+
+      case "set_caption": {
+        if (order.status === "sent_to_print") return fail("This order has already gone to print.");
+        const caption = cleanCaption(note);
+        if (caption === (order.caption ?? "")) return Response.json({ order: view(order, origin) });
+        if (caption) order.caption = caption; else delete order.caption;
+        log(order, caption ? `Caption set to "${caption}"` : "Caption removed");
         await saveOrder(order);
         return Response.json({ order: view(order, origin) });
       }

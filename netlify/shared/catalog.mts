@@ -1,7 +1,7 @@
 // Products, prices and prompts live here. Prices are in cents and include US shipping.
 export type StyleId = "engraved" | "studio" | "heritage";
 export type CategoryId = "automobile" | "yacht" | "aircraft" | "building" | "other";
-export type SizeId = "16x20" | "24x30" | "30x40";
+export type SizeId = "12x16" | "16x20" | "24x30" | "30x40";
 export type FrameId = "walnut" | "ebony" | "olive";
 
 interface Style {
@@ -101,10 +101,12 @@ export const FRAMES: Record<FrameId, string> = { walnut: "Dark walnut", ebony: "
 export const COLLECTOR_PRICE = 30000;
 
 // aspect is landscape (width:height); portrait subjects such as buildings flip it.
-export const SIZES: Record<SizeId, { name: string; price: number; aspect: string; inches: [number, number]; dpi: number }> = {
-  "16x20": { name: "16 × 20 in", price: 39500, aspect: "5:4", inches: [20, 16], dpi: 300 },
-  "24x30": { name: "24 × 30 in", price: 69500, aspect: "5:4", inches: [30, 24], dpi: 300 },
-  "30x40": { name: "30 × 40 in", price: 125000, aspect: "4:3", inches: [40, 30], dpi: 240 },
+// Retired sizes stay so old orders still read correctly, but can't be ordered.
+export const SIZES: Record<SizeId, { name: string; price: number; aspect: string; inches: [number, number]; dpi: number; retired?: boolean }> = {
+  "12x16": { name: "16 × 12 in", price: 29500, aspect: "4:3", inches: [16, 12], dpi: 300 },
+  "16x20": { name: "20 × 16 in", price: 39500, aspect: "5:4", inches: [20, 16], dpi: 300 },
+  "24x30": { name: "30 × 24 in", price: 69500, aspect: "5:4", inches: [30, 24], dpi: 300 },
+  "30x40": { name: "40 × 30 in", price: 125000, aspect: "4:3", inches: [40, 30], dpi: 240, retired: true },
 };
 
 // Pixel size of the print file (landscape width × height, flipped for portrait subjects).

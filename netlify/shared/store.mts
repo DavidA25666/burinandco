@@ -19,6 +19,7 @@ export interface Order {
   price: number;
   notes: string;
   plaque: [string, string]; // Plaques are retired; older orders may still have one.
+  caption?: string; // Optional line printed under the art.
   photoKey: string;
   renders: { key: string; createdAt: string; note: string | null }[];
   changeRequests: { at: string; note: string; version: number }[];

@@ -25,8 +25,9 @@ export default async (req: Request) => {
       frame: FRAMES[order.frame],
       subject: categoryInfo(order.category).subject,
       plaque: order.plaque,
+      caption: order.caption ?? "",
       version: order.renders.length,
-      renderUrl: latest ? `${origin}/api/proof-image?o=${order.id}&t=${encodeURIComponent(token)}&v=${order.renders.length}` : null,
+      renderUrl: latest ? `${origin}/api/proof-image?o=${order.id}&t=${encodeURIComponent(token)}&v=${order.renders.length}&c=${encodeURIComponent(order.caption ?? "")}` : null,
       price: order.price,
       // Orders from before proof-first payment were paid at checkout.
       prepaid: !order.card,

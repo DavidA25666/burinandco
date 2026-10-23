@@ -58,6 +58,7 @@
       }
       const price = "$" + (d.price / 100).toLocaleString("en-US");
       const plaque = d.plaque && d.plaque[0] ? ` and check the spelling of your plaque: <strong>${esc(d.plaque[0])}${d.plaque[1] ? " / " + esc(d.plaque[1]) : ""}</strong>` : "";
+      const caption = d.caption ? `, and check the spelling of the line under the art: <strong>${esc(d.caption.toUpperCase())}</strong>` : "";
       if (d.paymentDue) {
         panel.innerHTML = intro + `
           <p>You approved this proof, but your saved card didn't go through. Complete payment of ${price} and we'll send it to print.</p>
@@ -65,7 +66,7 @@
           <p class="form-error" id="err" role="alert"></p>`;
       } else {
       panel.innerHTML = intro + `
-        <p>Look closely at every badge, line and window${plaque}. The watermark is only on this preview; your print is clean, full resolution and on cotton rag.</p>
+        <p>Look closely at every badge, line and window${plaque}${caption}. The watermark is only on this preview; your print is clean, full resolution and on cotton rag.</p>
         <p>${d.prepaid ? "Once you approve, we print, frame and ship it." : `When you approve, we charge the card you saved, ${price}, and then print, frame and ship it. Asking for changes costs nothing.`}</p>
         <div class="actions">
           <button class="btn" id="approve">${d.prepaid ? "Approve and print" : `Approve and pay ${price}`}</button>

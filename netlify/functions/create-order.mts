@@ -2,6 +2,7 @@ import type { Config } from "@netlify/functions";
 import { STYLES, SIZES, FRAMES, CATEGORIES, type StyleId, type SizeId, type FrameId, type CategoryId, productName } from "../shared/catalog.mts";
 import { filesStore, saveOrder, type Order } from "../shared/store.mts";
 import { createCardSetup } from "../shared/stripe.mts";
+import { cleanCaption } from "../shared/caption.mts";
 
 const bad = (error: string, status = 400) => Response.json({ error }, { status });
 
@@ -14,8 +15,7 @@ export default async (req: Request) => {
     const email = String(form.get("email") ?? "").trim().slice(0, 200);
     const style = String(form.get("style")) as StyleId;
     const size = String(form.get("size")) as SizeId;
-    // 30 × 40 is too big for the 2-inch mouldings, so it always gets the wide olive frame.
-    const frame = (size === "30x40" ? "olive" : String(form.get("frame"))) as FrameId;
+    const frame = String(form.get("frame")) as FrameId;
     const category = String(form.get("category")) as CategoryId;
     const ship = (k: string, max = 100) => String(form.get(`ship_${k}`) ?? "").replace(/[\n\r]/g, " ").trim().slice(0, max);
     const shipping = {
@@ -24,6 +24,7 @@ export default async (req: Request) => {
       address: { line1: ship("line1"), line2: ship("line2") || null, city: ship("city"), state: ship("state", 2).toUpperCase(), postal_code: ship("zip", 10), country: "US" },
     };
     const notes = String(form.get("notes") ?? "").trim().slice(0, 600);
+    const caption = cleanCaption(form.get("caption"));
 
     if (!(photo instanceof File) || photo.size === 0) return bad("Add a photograph.");
     if (photo.size > 5.5 * 1024 * 1024) return bad("That photo is too large. Use one under 5 MB.");
@@ -33,7 +34,7 @@ export default async (req: Request) => {
     if (!shipping.name || !shipping.address.line1 || !shipping.address.city) return bad("Add the shipping name and address.");
     if (!/^[A-Z]{2}$/.test(shipping.address.state)) return bad("Use the two-letter state code, like MA.");
     if (!/^\d{5}(-\d{4})?$/.test(shipping.address.postal_code)) return bad("Check the ZIP code.");
-    if (!STYLES[style] || !SIZES[size] || !FRAMES[frame] || !CATEGORIES[category]) return bad("Choose a subject, style, size and frame.");
+    if (!STYLES[style] || !SIZES[size] || SIZES[size].retired || !FRAMES[frame] || frame === "olive" || !CATEGORIES[category]) return bad("Choose a subject, style, size and frame.");
 
     const id = crypto.randomUUID();
     const photoKey = `photo/${id}`;
@@ -42,7 +43,7 @@ export default async (req: Request) => {
     const order: Order = {
       id, createdAt: new Date().toISOString(), status: "awaiting_card",
       customer: { name, email }, category, style, size, frame, collector: false, shipping,
-      price: SIZES[size].price, notes, plaque: ["", ""],
+      price: SIZES[size].price, notes, plaque: ["", ""], ...(caption ? { caption } : {}),
       photoKey, renders: [], changeRequests: [], history: [{ at: new Date().toISOString(), event: "Order started" }],
     };
 

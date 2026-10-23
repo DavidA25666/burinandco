@@ -5,7 +5,7 @@ export default async () =>
   Response.json({
     categories: Object.entries(CATEGORIES).map(([id, c]) => ({ id, name: c.name })),
     styles: Object.entries(STYLES).map(([id, s]) => ({ id, name: s.name, blurb: s.blurb })),
-    sizes: Object.entries(SIZES).map(([id, s]) => ({ id, name: s.name, price: s.price })),
+    sizes: Object.entries(SIZES).filter(([, s]) => !s.retired).map(([id, s]) => ({ id, name: s.name, price: s.price })),
     frames: Object.entries(FRAMES).map(([id, name]) => ({ id, name })),
     collectorPrice: COLLECTOR_PRICE,
   });
