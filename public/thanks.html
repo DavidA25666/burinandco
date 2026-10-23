@@ -15,5 +15,9 @@
   <p>Your card is saved but not charged. We charge it only when you approve your proof. Questions? Reply to any of our emails.</p>
   <a class="btn secondary" href="/">Back to home</a>
 </div></section></main>
+<script>
+  const sid = new URLSearchParams(location.search).get("session_id");
+  if (sid) fetch("/api/checkout-return", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sid }) }).catch(() => {});
+</script>
 </body>
 </html>

@@ -53,7 +53,7 @@ export default async (req: Request) => {
       email,
       amount: order.price,
       productName: productName(order),
-      successUrl: `${origin}/thanks.html`,
+      successUrl: `${origin}/thanks.html?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${origin}/#commission`,
     });
     order.stripeSessionId = session.id;

@@ -40,6 +40,10 @@ export async function createCardSetup(opts: { orderId: string; name: string; ema
   return stripe<{ id: string; url: string }>("checkout/sessions", params);
 }
 
+export function getCheckoutSession(id: string) {
+  return stripe<any>(`checkout/sessions/${encodeURIComponent(id)}`);
+}
+
 export function getSetupIntent(id: string) {
   return stripe<{ customer: string | null; payment_method: string | null }>(`setup_intents/${encodeURIComponent(id)}`);
 }

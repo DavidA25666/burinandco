@@ -69,7 +69,7 @@ export default async (req: Request) => {
       const session = await createPaymentCheckout({
         orderId: order.id, customer: order.card?.customer, email: order.customer.email, amount: order.price,
         productName: productName(order),
-        successUrl: `${origin}/proof.html?o=${order.id}&t=${encodeURIComponent(token)}`,
+        successUrl: `${origin}/proof.html?o=${order.id}&t=${encodeURIComponent(token)}&session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${origin}/proof.html?o=${order.id}&t=${encodeURIComponent(token)}`,
       });
       await saveOrder(order);
