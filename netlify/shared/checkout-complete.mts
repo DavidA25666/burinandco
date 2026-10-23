@@ -50,7 +50,7 @@ export async function handleCompletedSession(origin: string, s: any) {
           ${SIZES[order.size].name}, ${esc(FRAMES[order.frame].toLowerCase())} frame<br>
           Total: ${money(order.price)}${a ? `<br>Ships to: ${esc(order.shipping!.name)}, ${esc(a.line1)}${a.line2 ? ", " + esc(a.line2) : ""}, ${esc(a.city)}, ${esc(a.state)} ${esc(a.postal_code)}` : ""}
         </p>
-        <p>Within 48 hours we'll email you a proof. Your card has been saved but not charged; we charge it only when you approve the proof. If anything needs changing, just tell us.</p>
+        <p>Within 48 hours (often within 24) we'll email you a proof. Your card has been saved but not charged; we charge it only when you approve the proof. If anything needs changing, just tell us.</p>
         <p>Questions? Reply to this email.</p><p>Burin &amp; Co.</p>`,
     });
     await notifyOwner(
