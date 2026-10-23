@@ -53,6 +53,9 @@
     $("sCat").textContent = label(v("category"));
     $("sStyle").textContent = v("style").closest("label").querySelector("strong").textContent;
     $("sSize").textContent = sizeLabel[size.value] + ", " + label(v("frame"));
+    const cap = $("caption").value.trim();
+    $("sCapRow").hidden = !cap;
+    $("sCap").textContent = cap.toUpperCase();
     $("total").textContent = money(Number(size.dataset.price));
   }
   form.addEventListener("input", update);

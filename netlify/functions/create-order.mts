@@ -2,6 +2,7 @@ import type { Config } from "@netlify/functions";
 import { STYLES, SIZES, FRAMES, CATEGORIES, type StyleId, type SizeId, type FrameId, type CategoryId, productName } from "../shared/catalog.mts";
 import { filesStore, saveOrder, type Order } from "../shared/store.mts";
 import { createCardSetup } from "../shared/stripe.mts";
+import { cleanCaption } from "../shared/caption.mts";
 
 const bad = (error: string, status = 400) => Response.json({ error }, { status });
 
@@ -23,6 +24,7 @@ export default async (req: Request) => {
       address: { line1: ship("line1"), line2: ship("line2") || null, city: ship("city"), state: ship("state", 2).toUpperCase(), postal_code: ship("zip", 10), country: "US" },
     };
     const notes = String(form.get("notes") ?? "").trim().slice(0, 600);
+    const caption = cleanCaption(form.get("caption"));
 
     if (!(photo instanceof File) || photo.size === 0) return bad("Add a photograph.");
     if (photo.size > 5.5 * 1024 * 1024) return bad("That photo is too large. Use one under 5 MB.");
@@ -41,7 +43,7 @@ export default async (req: Request) => {
     const order: Order = {
       id, createdAt: new Date().toISOString(), status: "awaiting_card",
       customer: { name, email }, category, style, size, frame, collector: false, shipping,
-      price: SIZES[size].price, notes, plaque: ["", ""],
+      price: SIZES[size].price, notes, plaque: ["", ""], ...(caption ? { caption } : {}),
       photoKey, renders: [], changeRequests: [], history: [{ at: new Date().toISOString(), event: "Order started" }],
     };
 

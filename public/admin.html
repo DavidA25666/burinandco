@@ -146,6 +146,7 @@
         ${a ? `<span>${esc(a.line1)}${a.line2 ? ", " + esc(a.line2) : ""}, ${esc(a.city)}, ${esc(a.state)} ${esc(a.postal_code)}</span>` : ""}
       </div>
       ${o.plaque && o.plaque[0] ? `<p class="request" style="margin-top:1rem"><strong>Plaque (older order):</strong> ${esc(o.plaque[0])}${o.plaque[1] ? ` / ${esc(o.plaque[1])}` : ""}.</p>` : ""}
+      <p class="request" style="margin-top:1rem"><strong>Caption:</strong> ${o.caption ? esc(o.caption.toUpperCase()) : "none"}</p>
       ${o.notes ? `<p class="request" style="margin-top:1rem"><strong>Customer note:</strong> ${esc(o.notes)}</p>` : ""}
       ${o.lastError && o.status === "render_failed" ? `<p class="form-error">${esc(o.lastError)}</p>` : ""}
 
@@ -166,6 +167,13 @@
         <p class="hint">Describe what to fix. ${lastReq && o.status === "changes_requested" ? "The customer's request is filled in for you." : ""}</p>
         <textarea id="adj" placeholder="For example: the wheels have five spokes, not ten; remove the extra mirror.">${o.status === "changes_requested" && lastReq ? esc(lastReq.note) : ""}</textarea>
         <div class="actions"><button class="btn secondary" data-act="regenerate" ${canRegen ? "" : "disabled"}>Regenerate</button></div>
+      </div>
+
+      <div class="box">
+        <h3>Caption under the art</h3>
+        <p class="hint">Up to 40 characters, printed in spaced capitals below the art. Leave blank for none. The proof and print file use whatever is saved here.</p>
+        <input type="text" id="caption" maxlength="40" value="${esc(o.caption || "")}">
+        <div class="actions"><button class="btn secondary" data-act="set_caption" ${o.status === "sent_to_print" ? "disabled" : ""}>Save caption</button></div>
       </div>
 
       <div class="box">
@@ -202,6 +210,7 @@
     const err = $("#act-err");
     const body = { action, id: selected };
     if (action === "regenerate") body.note = $("#adj").value;
+    if (action === "set_caption") body.note = $("#caption").value;
     if (action === "mark_sent_to_print") {
       body.force = $("#force")?.checked || false;
       body.note = $("#print-ref")?.value || "";

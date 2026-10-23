@@ -110,6 +110,8 @@
               <label><input type="radio" name="frame" value="walnut" checked> Dark walnut</label>
               <label><input type="radio" name="frame" value="ebony"> Black oak</label>
             </div>
+            <label class="notes caption-field" for="caption">A line under the drawing (optional, free) <input id="caption" name="caption" maxlength="40" placeholder="For example: 1967 Shelby GT500 · Est. 2024"></label>
+            <p class="hint">Printed in spaced capitals on the paper below the art, like a gallery title. Up to 40 characters. Leave it blank for art only.</p>
           </fieldset>
 
           <fieldset>
@@ -142,7 +144,8 @@
           <dl>
             <div><dt>Subject</dt><dd id="sCat">Automobile</dd></div>
             <div><dt>Style</dt><dd id="sStyle">Engraved</dd></div>
-            <div><dt>Size</dt><dd id="sSize">16 × 20 in, Dark walnut</dd></div>
+            <div><dt>Size</dt><dd id="sSize">20 × 16 in, Dark walnut</dd></div>
+            <div id="sCapRow" hidden><dt>Caption</dt><dd id="sCap"></dd></div>
           </dl>
           <p class="total"><span>Total</span><strong id="total">$395</strong></p>
           <button class="btn wide" type="submit" id="pay">Continue to request my proof</button>
@@ -162,7 +165,7 @@
       </div>
       <div class="pair trio">
         <figure><img src="img/framed-studio.jpg" alt="Framed Studio rendering of a silver Ford Mustang fastback in a black oak frame with a white mat" width="1120" height="1050" loading="lazy"><figcaption>Studio, in black oak</figcaption></figure>
-        <figure><img src="img/framed-engraved.jpg" alt="Framed Engraved portrait of a Corvette Sting Ray in a dark walnut frame" width="1120" height="1050" loading="lazy"><figcaption>Engraved, in dark walnut</figcaption></figure>
+        <figure><img src="img/framed-engraved.jpg" alt="Framed Engraved portrait of a Corvette Sting Ray in a dark walnut frame, captioned 1963 Corvette Sting Ray" width="1120" height="1050" loading="lazy"><figcaption>Engraved, in dark walnut, with a caption</figcaption></figure>
         <figure><img src="img/framed-heritage.jpg" alt="Framed Heritage painting of a red Ferrari F40 in a dark walnut frame" width="1120" height="1050" loading="lazy"><figcaption>Heritage, in dark walnut</figcaption></figure>
       </div>
     </div>
