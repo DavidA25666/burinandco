@@ -4,8 +4,8 @@
 import { getSetupIntent } from "./stripe.mts";
 import { getOrder, saveOrder, log, ordersStore, type Order } from "./store.mts";
 import { triggerRender } from "./render-trigger.mts";
-import { notifyOwner, button, esc } from "./email.mts";
-import { SIZES, styleInfo, categoryInfo } from "./catalog.mts";
+import { notifyOwner, sendEmail, button, esc } from "./email.mts";
+import { SIZES, FRAMES, styleInfo, categoryInfo } from "./catalog.mts";
 
 const money = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
@@ -39,6 +39,20 @@ export async function handleCompletedSession(origin: string, s: any) {
     log(order, `Card saved; ${money(order.price)} is due on approval`);
     await saveOrder(order);
     await triggerRender(origin, order.id, null);
+    const a = order.shipping?.address;
+    await sendEmail({
+      to: order.customer.email,
+      replyTo: Netlify.env.get("OWNER_EMAIL"),
+      subject: "We've received your Burin & Co. commission",
+      html: `<p>${esc(order.customer.name.split(" ")[0])},</p>
+        <p>Thank you. We've received your photograph and started on the ${esc(styleInfo(order.style).name)} portrait of your ${categoryInfo(order.category).subject}.</p>
+        <p style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#555">
+          ${SIZES[order.size].name}, ${esc(FRAMES[order.frame].toLowerCase())} frame<br>
+          Total: ${money(order.price)}${a ? `<br>Ships to: ${esc(order.shipping!.name)}, ${esc(a.line1)}${a.line2 ? ", " + esc(a.line2) : ""}, ${esc(a.city)}, ${esc(a.state)} ${esc(a.postal_code)}` : ""}
+        </p>
+        <p>Within 48 hours we'll email you a proof. Your card has been saved but not charged; we charge it only when you approve the proof. If anything needs changing, just tell us.</p>
+        <p>Questions? Reply to this email.</p><p>Burin &amp; Co.</p>`,
+    });
     await notifyOwner(
       `New order: ${order.customer.name}`,
       `<p>${esc(order.customer.name)} ordered ${description}. Their card is saved and will be charged ${money(order.price)} when they approve the proof. It is rendering now, and you'll get another email when it's ready to review.</p>`,
