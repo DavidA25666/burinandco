@@ -21,7 +21,7 @@
 <body>
 <header class="site-head"><div class="wrap"><a class="brand" href="/">Burin &amp; Co.</a></div></header>
 <main><section style="background:var(--wall)"><div class="wrap proof">
-  <div class="frame" id="frame"><div class="mat"><img id="render" alt="Your engraving proof"></div></div>
+  <div class="frame" id="frame"><div class="mat"><img id="render" alt="Your portrait proof" oncontextmenu="return false" draggable="false"></div></div>
   <div id="panel"><p>Loading your proof…</p></div>
 </div></section></main>
 
@@ -38,39 +38,60 @@
     const res = await fetch("/api/proof", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ o, t, action, note }) });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || "That didn't go through. Try again in a moment.");
+    return data;
   }
 
-  fetch(`/api/proof?o=${encodeURIComponent(o || "")}&t=${encodeURIComponent(t || "")}`)
+  const sid = p.get("session_id");
+  const returned = sid
+    ? fetch("/api/checkout-return", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sid }) }).catch(() => {})
+    : Promise.resolve();
+  returned.then(() => fetch(`/api/proof?o=${encodeURIComponent(o || "")}&t=${encodeURIComponent(t || "")}`))
     .then(async (r) => { const d = await r.json(); if (!r.ok) throw new Error(d.error); return d; })
     .then((d) => {
       document.getElementById("frame").className = `frame ${d.frame === "Black oak" ? "ebony" : "walnut"}`;
       if (d.renderUrl) document.getElementById("render").src = d.renderUrl;
-      const intro = `<h1>Your ${esc(d.subject)}, engraved.</h1>
+      const intro = `<h1>Your ${esc(d.subject)}, ready for review.</h1>
         <p class="lede">${esc(d.style)}, ${esc(d.size)}, ${esc(d.frame.toLowerCase())} frame${d.version > 1 ? `. This is version ${d.version}.` : "."}</p>`;
       if (!d.awaitingResponse) {
         panel.innerHTML = intro + `<p class="done">Thanks, we have your response to this proof. We'll email you if anything else is needed.</p>`;
         return;
       }
+      const price = "$" + (d.price / 100).toLocaleString("en-US");
+      const plaque = d.plaque && d.plaque[0] ? ` and check the spelling of your plaque: <strong>${esc(d.plaque[0])}${d.plaque[1] ? " / " + esc(d.plaque[1]) : ""}</strong>` : "";
+      if (d.paymentDue) {
+        panel.innerHTML = intro + `
+          <p>You approved this proof, but your saved card didn't go through. Complete payment of ${price} and we'll send it to print.</p>
+          <div class="actions"><button class="btn" id="approve">Complete payment</button></div>
+          <p class="form-error" id="err" role="alert"></p>`;
+      } else {
       panel.innerHTML = intro + `
-        <p>Look closely at every badge, line and window, and check the spelling of your plaque: <strong>${esc(d.plaque[0])}${d.plaque[1] ? " / " + esc(d.plaque[1]) : ""}</strong>. Once you approve, we print, frame, plaque and ship it.</p>
+        <p>Look closely at every badge, line and window${plaque}. The watermark is only on this preview; your print is clean, full resolution and on cotton rag.</p>
+        <p>${d.prepaid ? "Once you approve, we print, frame and ship it." : `When you approve, we charge the card you saved, ${price}, and then print, frame and ship it. Asking for changes costs nothing.`}</p>
         <div class="actions">
-          <button class="btn" id="approve">Approve and print</button>
+          <button class="btn" id="approve">${d.prepaid ? "Approve and print" : `Approve and pay ${price}`}</button>
           <button class="btn secondary" id="change">Request a change</button>
         </div>
         <div id="change-box">
           <label for="note" class="label">What should we change?</label>
-          <textarea id="note" maxlength="1000" placeholder="For example: the wheels should have five spokes, and the plaque should read 1973, not 1974."></textarea>
+          <textarea id="note" maxlength="1000" placeholder="For example: the wheels should have five spokes, and the side mirrors are black, not chrome."></textarea>
           <div class="actions"><button class="btn" id="send-change">Send my notes</button></div>
         </div>
         <p class="form-error" id="err" role="alert"></p>`;
+      }
       const err = document.getElementById("err");
-      document.getElementById("change").onclick = () => { document.getElementById("change-box").classList.add("open"); document.getElementById("note").focus(); };
+      const changeBtn = document.getElementById("change");
+      if (changeBtn) changeBtn.onclick = () => { document.getElementById("change-box").classList.add("open"); document.getElementById("note").focus(); };
       document.getElementById("approve").onclick = async (e) => {
         e.target.disabled = true; err.textContent = "";
-        try { await respond("approve"); finished("<h2>Approved. Thank you!</h2><p>Your engraving goes to print next. We'll email tracking details when it ships.</p>"); }
+        try {
+          const r = await respond("approve");
+          if (r.checkoutUrl) { location.href = r.checkoutUrl; return; }
+          finished(`<h2>Approved. Thank you!</h2><p>${d.prepaid ? "" : `We've charged ${price} to your saved card. `}Your portrait goes to print next. We'll email tracking details when it ships.</p>`);
+        }
         catch (ex) { err.textContent = ex.message; e.target.disabled = false; }
       };
-      document.getElementById("send-change").onclick = async (e) => {
+      const sendBtn = document.getElementById("send-change");
+      if (sendBtn) sendBtn.onclick = async (e) => {
         const note = document.getElementById("note").value.trim();
         if (!note) { err.textContent = "Tell us what you'd like changed."; return; }
         e.target.disabled = true; err.textContent = "";

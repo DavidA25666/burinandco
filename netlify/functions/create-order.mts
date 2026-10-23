@@ -1,7 +1,7 @@
 import type { Config } from "@netlify/functions";
-import { STYLES, SIZES, FRAMES, CATEGORIES, COLLECTOR_PRICE, type StyleId, type SizeId, type FrameId, type CategoryId, styleInfo, categoryInfo } from "../shared/catalog.mts";
+import { STYLES, SIZES, FRAMES, CATEGORIES, type StyleId, type SizeId, type FrameId, type CategoryId, productName } from "../shared/catalog.mts";
 import { filesStore, saveOrder, type Order } from "../shared/store.mts";
-import { createCheckout } from "../shared/stripe.mts";
+import { createCardSetup } from "../shared/stripe.mts";
 
 const bad = (error: string, status = 400) => Response.json({ error }, { status });
 
@@ -17,37 +17,43 @@ export default async (req: Request) => {
     // 30 × 40 is too big for the 2-inch mouldings, so it always gets the wide olive frame.
     const frame = (size === "30x40" ? "olive" : String(form.get("frame"))) as FrameId;
     const category = String(form.get("category")) as CategoryId;
-    const collector = form.get("collector") === "on" || form.get("collector") === "true";
+    const ship = (k: string, max = 100) => String(form.get(`ship_${k}`) ?? "").replace(/[\n\r]/g, " ").trim().slice(0, max);
+    const shipping = {
+      name: ship("name"),
+      phone: ship("phone", 30) || null,
+      address: { line1: ship("line1"), line2: ship("line2") || null, city: ship("city"), state: ship("state", 2).toUpperCase(), postal_code: ship("zip", 10), country: "US" },
+    };
     const notes = String(form.get("notes") ?? "").trim().slice(0, 600);
-    const line = (k: string) => String(form.get(k) ?? "").replace(/[\n\r]/g, " ").trim().slice(0, 38);
-    const plaque: [string, string] = [line("line1"), line("line2")];
 
     if (!(photo instanceof File) || photo.size === 0) return bad("Add a photograph.");
     if (photo.size > 5.5 * 1024 * 1024) return bad("That photo is too large. Use one under 5 MB.");
     if (!/^image\/(jpeg|png|webp)$/.test(photo.type)) return bad("Upload a JPG, PNG or WebP photo.");
     if (!name) return bad("Add your name.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return bad("Check your email address.");
+    if (!shipping.name || !shipping.address.line1 || !shipping.address.city) return bad("Add the shipping name and address.");
+    if (!/^[A-Z]{2}$/.test(shipping.address.state)) return bad("Use the two-letter state code, like MA.");
+    if (!/^\d{5}(-\d{4})?$/.test(shipping.address.postal_code)) return bad("Check the ZIP code.");
     if (!STYLES[style] || !SIZES[size] || !FRAMES[frame] || !CATEGORIES[category]) return bad("Choose a subject, style, size and frame.");
-    if (!plaque[0]) return bad("Add the first line of the plaque.");
 
     const id = crypto.randomUUID();
     const photoKey = `photo/${id}`;
     await filesStore().set(photoKey, await photo.arrayBuffer());
 
     const order: Order = {
-      id, createdAt: new Date().toISOString(), status: "awaiting_payment",
-      customer: { name, email }, category, style, size, frame, collector,
-      price: SIZES[size].price + (collector ? COLLECTOR_PRICE : 0), notes, plaque,
+      id, createdAt: new Date().toISOString(), status: "awaiting_card",
+      customer: { name, email }, category, style, size, frame, collector: false, shipping,
+      price: SIZES[size].price, notes, plaque: ["", ""],
       photoKey, renders: [], changeRequests: [], history: [{ at: new Date().toISOString(), event: "Order started" }],
     };
 
     const origin = new URL(req.url).origin;
-    const session = await createCheckout({
+    const session = await createCardSetup({
       orderId: id,
+      name,
       email,
       amount: order.price,
-      productName: `Burin & Co. ${styleInfo(style).name} portrait of your ${categoryInfo(category).subject}: ${SIZES[size].name}, ${FRAMES[frame].toLowerCase()} frame${collector ? ", collector edition" : ""}`,
-      successUrl: `${origin}/thanks.html`,
+      productName: productName(order),
+      successUrl: `${origin}/thanks.html?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${origin}/#commission`,
     });
     order.stripeSessionId = session.id;

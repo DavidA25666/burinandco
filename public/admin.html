@@ -72,14 +72,17 @@
   let timer = null;
 
   const STATUS = {
+    awaiting_card: ["No card yet", ""],
     awaiting_payment: ["Unpaid", ""],
+    card_saved: ["Card saved, starting render", ""],
     paid: ["Paid, starting render", ""],
     rendering: ["Rendering", ""],
     render_failed: ["Render failed", "bad"],
     needs_review: ["Needs your review", "act"],
     proof_sent: ["Waiting on customer", ""],
     changes_requested: ["Changes requested", "act"],
-    customer_approved: ["Approved, send to print", "act"],
+    payment_due: ["Approved, card declined", "bad"],
+    customer_approved: ["Approved and paid, send to print", "act"],
     sent_to_print: ["Sent to print", "done"],
     archived: ["Archived", ""],
   };
@@ -103,7 +106,7 @@
     renderList();
     renderDetail();
     clearTimeout(timer);
-    if (orders.some((o) => o.status === "rendering" || o.status === "paid" || o.printStatus === "preparing")) timer = setTimeout(() => load().catch(() => {}), 15000);
+    if (orders.some((o) => o.status === "rendering" || o.status === "paid" || o.status === "card_saved" || o.printStatus === "preparing")) timer = setTimeout(() => load().catch(() => {}), 15000);
   }
 
   function renderList() {
@@ -129,7 +132,7 @@
     const a = o.shipping?.address;
     const lastReq = o.changeRequests.at(-1);
     const canSendProof = n > 0 && ["needs_review", "proof_sent", "changes_requested"].includes(o.status);
-    const canRegen = !["rendering", "sent_to_print", "awaiting_payment"].includes(o.status);
+    const canRegen = !["rendering", "sent_to_print", "awaiting_payment", "awaiting_card"].includes(o.status);
     const canPrint = o.status !== "sent_to_print" && n > 0;
     const latest = o.renders[n - 1];
 
@@ -142,7 +145,7 @@
         <span>$${(o.price / 100).toFixed(2)}</span><span><a href="mailto:${esc(o.customer.email)}">${esc(o.customer.email)}</a></span>
         ${a ? `<span>${esc(a.line1)}${a.line2 ? ", " + esc(a.line2) : ""}, ${esc(a.city)}, ${esc(a.state)} ${esc(a.postal_code)}</span>` : ""}
       </div>
-      <p class="request" style="margin-top:1rem"><strong>Plaque:</strong> ${esc(o.plaque[0])}${o.plaque[1] ? ` / ${esc(o.plaque[1])}` : ""}. Check the spelling before ordering the plaque.</p>
+      ${o.plaque && o.plaque[0] ? `<p class="request" style="margin-top:1rem"><strong>Plaque (older order):</strong> ${esc(o.plaque[0])}${o.plaque[1] ? ` / ${esc(o.plaque[1])}` : ""}.</p>` : ""}
       ${o.notes ? `<p class="request" style="margin-top:1rem"><strong>Customer note:</strong> ${esc(o.notes)}</p>` : ""}
       ${o.lastError && o.status === "render_failed" ? `<p class="form-error">${esc(o.lastError)}</p>` : ""}
 
@@ -150,9 +153,9 @@
         <figure><img src="${o.photoUrl}" alt="Customer photo"><figcaption>Customer photo</figcaption></figure>
         <figure>
           ${n ? `<div class="versions">${o.renders.map((_, i) => `<button data-v="${i + 1}" aria-pressed="${i + 1 === v}">v${i + 1}</button>`).join("")}</div>
-            <a href="${r.url}" target="_blank" rel="noopener"><img src="${r.url}" alt="Engraving version ${v}"></a>
+            <a href="${r.url}" target="_blank" rel="noopener"><img src="${r.url}" alt="Version ${v}"></a>
             <figcaption>Version ${v}${r.note ? `: ${esc(r.note)}` : ""}. Click to open full size.</figcaption>`
-          : `<p>${o.status === "rendering" || o.status === "paid" ? "Rendering… this page refreshes on its own." : "No engraving yet."}</p>`}
+          : `<p>${o.status === "rendering" || o.status === "paid" || o.status === "card_saved" ? "Rendering… this page refreshes on its own." : "No rendering yet."}</p>`}
         </figure>
       </div>
 
@@ -162,7 +165,7 @@
         <h3>Regenerate</h3>
         <p class="hint">Describe what to fix. ${lastReq && o.status === "changes_requested" ? "The customer's request is filled in for you." : ""}</p>
         <textarea id="adj" placeholder="For example: the wheels have five spokes, not ten; remove the extra mirror.">${o.status === "changes_requested" && lastReq ? esc(lastReq.note) : ""}</textarea>
-        <div class="actions"><button class="btn secondary" data-act="regenerate" ${canRegen ? "" : "disabled"}>Regenerate engraving</button></div>
+        <div class="actions"><button class="btn secondary" data-act="regenerate" ${canRegen ? "" : "disabled"}>Regenerate</button></div>
       </div>
 
       <div class="box">
@@ -174,14 +177,14 @@
       <div class="box">
         <h3>Send to print</h3>
         ${o.status === "sent_to_print" ? `<p>Sent to print${o.printOrderRef ? `: <strong>${esc(o.printOrderRef)}</strong>` : ""}.</p>` : `
-        <p class="hint">${o.status === "customer_approved" ? "The customer approved v" + n + "." : "The customer hasn't approved yet."} Download the full-size file, order the print, frame and plaque from the lab, then record the lab's order number here.</p>
+        <p class="hint">${o.status === "customer_approved" ? "The customer approved v" + n + "." : "The customer hasn't approved yet."} Download the full-size file, order the print and frame from the lab, then record the lab's order number here.</p>
         ${o.printFile ? `<p><a href="${o.printFileUrl}" download="burin-${o.id.slice(0, 8)}-v${o.printFile.version}-print.jpg">Download print file</a> (v${o.printFile.version}, ${o.printFile.width} × ${o.printFile.height} px at ${o.printFile.dpi} dpi)${o.printFile.version !== n ? ". <strong>This is from an older version; make it again.</strong>" : ""}</p>` : ""}
         ${o.printStatus === "preparing" ? `<p>Making the print file (upscaling, then fitting to the frame). This takes a few minutes and the page refreshes on its own.</p>` : ""}
         ${o.printStatus === "failed" ? `<p class="form-error">Print file failed: ${esc(o.printError || "")}</p>` : ""}
         <div class="actions"><button class="btn secondary" data-act="prepare_print" ${n && o.printStatus !== "preparing" ? "" : "disabled"}>${o.printFile ? "Make the print file again" : `Make print file from v${n || ""}`}</button></div>
         ${latest ? `<p class="hint"><a href="${latest.url}" download="burin-${o.id.slice(0, 8)}-v${n}.png">Download the original v${n} render</a> (not upscaled).</p>` : ""}
         <input type="text" id="print-ref" placeholder="Lab order number (optional)">
-        ${o.status !== "customer_approved" ? `<label class="hint"><input type="checkbox" id="force"> Mark sent without customer approval</label>` : ""}
+        ${o.status !== "customer_approved" ? `<label class="hint"><input type="checkbox" id="force"> Mark sent without customer approval (their card is not charged)</label>` : ""}
         <div class="actions"><button class="btn" data-act="mark_sent_to_print" ${canPrint ? "" : "disabled"}>Mark v${n || ""} as sent to print</button></div>`}
       </div>
 
@@ -202,7 +205,7 @@
     if (action === "mark_sent_to_print") {
       body.force = $("#force")?.checked || false;
       body.note = $("#print-ref")?.value || "";
-      if (!confirm("Mark this engraving as sent to print?")) return;
+      if (!confirm("Mark this order as sent to print?")) return;
     }
     if (action === "prepare_print") body.force = $("#force")?.checked || false;
     if (action === "send_proof" && !confirm("Email this proof to the customer?")) return;

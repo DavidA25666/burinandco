@@ -1,9 +1,9 @@
-import { getStore, getDeployStore } from "@netlify/blobs";
+import { getStore } from "@netlify/blobs";
 import type { StyleId, CategoryId, SizeId, FrameId } from "./catalog.mts";
 
 export type OrderStatus =
-  | "awaiting_payment" | "paid" | "rendering" | "render_failed" | "needs_review"
-  | "proof_sent" | "changes_requested" | "customer_approved" | "sent_to_print" | "archived";
+  | "awaiting_card" | "card_saved" | "awaiting_payment" | "paid" | "rendering" | "render_failed" | "needs_review"
+  | "proof_sent" | "changes_requested" | "payment_due" | "customer_approved" | "sent_to_print" | "archived";
 
 export interface Order {
   id: string;
@@ -18,7 +18,7 @@ export interface Order {
   collector: boolean;
   price: number;
   notes: string;
-  plaque: [string, string];
+  plaque: [string, string]; // Plaques are retired; older orders may still have one.
   photoKey: string;
   renders: { key: string; createdAt: string; note: string | null }[];
   changeRequests: { at: string; note: string; version: number }[];
@@ -28,6 +28,11 @@ export interface Order {
     address: { line1: string; line2?: string | null; city: string; state: string; postal_code: string; country: string };
   } | null;
   stripeSessionId?: string;
+  // Card saved at order time and charged when the customer approves the proof.
+  card?: { customer: string; paymentMethod: string } | null;
+  chargeAttempts?: number;
+  paymentIntentId?: string;
+  paidAt?: string;
   printOrderRef?: string;
   printFile?: { key: string; version: number; width: number; height: number; dpi: number; createdAt: string } | null;
   printStatus?: "preparing" | "failed";
@@ -36,10 +41,11 @@ export interface Order {
   history: { at: string; event: string }[];
 }
 
-// Production data goes to the global store; previews and local dev stay isolated per deploy.
+// Production data goes to the global store. Previews share a separate "-preview" store, so
+// test orders survive a new preview build but never mix with real ones.
 function pick(name: string) {
-  const opts = { name, consistency: "strong" as const };
-  return Netlify.context?.deploy?.context === "production" ? getStore(opts) : getDeployStore(opts);
+  const production = Netlify.context?.deploy?.context === "production";
+  return getStore({ name: production ? name : `${name}-preview`, consistency: "strong" });
 }
 export const ordersStore = () => pick("orders");
 export const filesStore = () => pick("files");

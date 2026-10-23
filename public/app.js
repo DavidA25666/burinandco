@@ -51,17 +51,13 @@
   function update() {
     const v = (name) => form.querySelector(`input[name="${name}"]:checked`);
     const size = v("size");
-    const collector = $("collector").checked;
     $("sCat").textContent = label(v("category"));
     $("sStyle").textContent = v("style").closest("label").querySelector("strong").textContent;
     const big = size.value === "30x40";
     form.querySelector(".frames").hidden = big;
     $("frameNote").hidden = !big;
     $("sSize").textContent = sizeLabel[size.value] + ", " + (big ? "olive" : label(v("frame")));
-    $("sColRow").hidden = !collector;
-    $("total").textContent = money(Number(size.dataset.price) + (collector ? 300 : 0));
-    $("pl1").textContent = $("line1").value || $("line1").placeholder;
-    $("pl2").textContent = $("line2").value || $("line2").placeholder;
+    $("total").textContent = money(Number(size.dataset.price));
   }
   form.addEventListener("input", update);
   form.addEventListener("change", update);
@@ -86,13 +82,15 @@
     const photo = $("photo").files[0];
     if (!photo) return showError("Add a photograph of what we're drawing.");
     if (photo.size > 5.5 * 1024 * 1024) return showError("That photo is too large. Use one under 5 MB.");
-    if (!$("line1").value.trim()) return showError("Add the first line of the plaque.");
     if (!$("name").value.trim()) return showError("Add your name.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($("email").value.trim())) return showError("Check your email address.");
+    for (const [id, msg] of [["ship_name", "Add the recipient's name."], ["ship_line1", "Add the street address."], ["ship_city", "Add the city."], ["ship_state", "Add the state."], ["ship_zip", "Add the ZIP code."]]) {
+      if (!$(id).value.trim()) return showError(msg);
+    }
 
     const btn = $("pay");
     btn.disabled = true;
-    btn.textContent = "Opening secure checkout…";
+    btn.textContent = "Opening secure card page…";
     try {
       const res = await fetch("/api/orders", { method: "POST", body: new FormData(form) });
       const data = await res.json().catch(() => ({}));
@@ -101,7 +99,7 @@
     } catch (ex) {
       showError(ex.message);
       btn.disabled = false;
-      btn.textContent = "Continue to payment";
+      btn.textContent = "Continue to request my proof";
     }
   });
 
