@@ -50,7 +50,7 @@
     .then((d) => {
       document.getElementById("frame").className = `frame ${d.frame === "Black oak" ? "ebony" : "walnut"}`;
       if (d.renderUrl) document.getElementById("render").src = d.renderUrl;
-      const intro = `<h1>Your ${esc(d.subject)}, engraved.</h1>
+      const intro = `<h1>Your ${esc(d.subject)}, ready for review.</h1>
         <p class="lede">${esc(d.style)}, ${esc(d.size)}, ${esc(d.frame.toLowerCase())} frame${d.version > 1 ? `. This is version ${d.version}.` : "."}</p>`;
       if (!d.awaitingResponse) {
         panel.innerHTML = intro + `<p class="done">Thanks, we have your response to this proof. We'll email you if anything else is needed.</p>`;

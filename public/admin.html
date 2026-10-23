@@ -153,9 +153,9 @@
         <figure><img src="${o.photoUrl}" alt="Customer photo"><figcaption>Customer photo</figcaption></figure>
         <figure>
           ${n ? `<div class="versions">${o.renders.map((_, i) => `<button data-v="${i + 1}" aria-pressed="${i + 1 === v}">v${i + 1}</button>`).join("")}</div>
-            <a href="${r.url}" target="_blank" rel="noopener"><img src="${r.url}" alt="Engraving version ${v}"></a>
+            <a href="${r.url}" target="_blank" rel="noopener"><img src="${r.url}" alt="Version ${v}"></a>
             <figcaption>Version ${v}${r.note ? `: ${esc(r.note)}` : ""}. Click to open full size.</figcaption>`
-          : `<p>${o.status === "rendering" || o.status === "paid" || o.status === "card_saved" ? "Rendering… this page refreshes on its own." : "No engraving yet."}</p>`}
+          : `<p>${o.status === "rendering" || o.status === "paid" || o.status === "card_saved" ? "Rendering… this page refreshes on its own." : "No rendering yet."}</p>`}
         </figure>
       </div>
 
@@ -165,7 +165,7 @@
         <h3>Regenerate</h3>
         <p class="hint">Describe what to fix. ${lastReq && o.status === "changes_requested" ? "The customer's request is filled in for you." : ""}</p>
         <textarea id="adj" placeholder="For example: the wheels have five spokes, not ten; remove the extra mirror.">${o.status === "changes_requested" && lastReq ? esc(lastReq.note) : ""}</textarea>
-        <div class="actions"><button class="btn secondary" data-act="regenerate" ${canRegen ? "" : "disabled"}>Regenerate engraving</button></div>
+        <div class="actions"><button class="btn secondary" data-act="regenerate" ${canRegen ? "" : "disabled"}>Regenerate</button></div>
       </div>
 
       <div class="box">
@@ -205,7 +205,7 @@
     if (action === "mark_sent_to_print") {
       body.force = $("#force")?.checked || false;
       body.note = $("#print-ref")?.value || "";
-      if (!confirm("Mark this engraving as sent to print?")) return;
+      if (!confirm("Mark this order as sent to print?")) return;
     }
     if (action === "prepare_print") body.force = $("#force")?.checked || false;
     if (action === "send_proof" && !confirm("Email this proof to the customer?")) return;

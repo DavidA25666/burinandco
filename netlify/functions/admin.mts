@@ -47,7 +47,7 @@ export default async (req: Request) => {
 
       case "send_proof": {
         const version = order.renders.length;
-        if (!version) return fail("There's no engraving to send yet.");
+        if (!version) return fail("There's no rendering to send yet.");
         const link = `${origin}/proof.html?o=${order.id}&t=${sign(`proof:${order.id}`)}`;
         const first = esc(order.customer.name.split(" ")[0]);
         const subject = categoryInfo(order.category).subject;
@@ -55,7 +55,7 @@ export default async (req: Request) => {
           to: order.customer.email,
           replyTo: Netlify.env.get("OWNER_EMAIL"),
           subject: version > 1 ? "Your updated Burin & Co. proof" : "Your Burin & Co. proof is ready",
-          html: `<p>${first},</p><p>${version > 1 ? "We've updated your engraving based on your notes." : `The engraving of your ${subject} is ready for your review.`} Approve it and we'll print and frame it. If anything is off, tell us what to change.</p>${button(link, "Review your proof")}<p>${order.card ? `Your card is charged $${(order.price / 100).toFixed(2)} only when you approve. Changes cost nothing.` : "Nothing prints until you approve it."}</p><p>Burin &amp; Co.</p>`,
+          html: `<p>${first},</p><p>${version > 1 ? "We've updated your portrait based on your notes." : `The portrait of your ${subject} is ready for your review.`} Approve it and we'll print and frame it. If anything is off, tell us what to change.</p>${button(link, "Review your proof")}<p>${order.card ? `Your card is charged $${(order.price / 100).toFixed(2)} only when you approve. Changes cost nothing.` : "Nothing prints until you approve it."}</p><p>Burin &amp; Co.</p>`,
         });
         if (!sent) return fail("The email didn't send. Check RESEND_API_KEY and FROM_EMAIL in Netlify.", 502);
         order.status = "proof_sent";
@@ -65,7 +65,7 @@ export default async (req: Request) => {
       }
 
       case "prepare_print": {
-        if (!order.renders.length) return fail("There's no engraving to print.");
+        if (!order.renders.length) return fail("There's no rendering to print.");
         if (order.printStatus === "preparing") return fail("The print file is already being made.");
         if (order.status !== "customer_approved" && order.status !== "sent_to_print" && !force) return fail("The customer hasn't approved this proof yet.");
         await triggerPrintFile(origin, order.id);
@@ -76,7 +76,7 @@ export default async (req: Request) => {
       case "mark_sent_to_print": {
         if (order.status === "sent_to_print") return fail("This order is already marked as sent to print.");
         if (order.status !== "customer_approved" && !force) return fail("The customer hasn't approved this proof yet.");
-        if (!order.renders.length) return fail("There's no engraving to print.");
+        if (!order.renders.length) return fail("There's no rendering to print.");
         order.printOrderRef = String(note ?? "").trim().slice(0, 120) || undefined;
         order.status = "sent_to_print";
         log(order, `Sent to print${order.printOrderRef ? ` (${order.printOrderRef})` : ""}`);

@@ -1,4 +1,4 @@
-import { getStore, getDeployStore } from "@netlify/blobs";
+import { getStore } from "@netlify/blobs";
 import type { StyleId, CategoryId, SizeId, FrameId } from "./catalog.mts";
 
 export type OrderStatus =
@@ -41,10 +41,11 @@ export interface Order {
   history: { at: string; event: string }[];
 }
 
-// Production data goes to the global store; previews and local dev stay isolated per deploy.
+// Production data goes to the global store. Previews share a separate "-preview" store, so
+// test orders survive a new preview build but never mix with real ones.
 function pick(name: string) {
-  const opts = { name, consistency: "strong" as const };
-  return Netlify.context?.deploy?.context === "production" ? getStore(opts) : getDeployStore(opts);
+  const production = Netlify.context?.deploy?.context === "production";
+  return getStore({ name: production ? name : `${name}-preview`, consistency: "strong" });
 }
 export const ordersStore = () => pick("orders");
 export const filesStore = () => pick("files");

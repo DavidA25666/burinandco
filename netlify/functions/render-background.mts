@@ -33,8 +33,8 @@ export default async (req: Request) => {
     log(order, `Version ${version} ready for review`);
     await saveOrder(order);
     await notifyOwner(
-      `Ready to review: ${order.customer.name}'s engraving (v${version})`,
-      `<p>Version ${version} of ${esc(order.customer.name)}'s engraving is ready. Check it against the original photo, then send the proof or regenerate.</p>${button(`${origin}/admin.html#${order.id}`, "Review in dashboard")}`,
+      `Ready to review: ${order.customer.name}'s portrait (v${version})`,
+      `<p>Version ${version} of ${esc(order.customer.name)}'s portrait is ready. Check it against the original photo, then send the proof or regenerate.</p>${button(`${origin}/admin.html#${order.id}`, "Review in dashboard")}`,
     );
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
