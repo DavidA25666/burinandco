@@ -113,7 +113,6 @@
               <label><input type="radio" name="frame" value="ebony"> Black oak</label>
             </div>
             <p class="frame-note" id="frameNote" hidden>30 × 40 is framed in a wider 2½-inch olive-wood moulding, sized for large work.</p>
-            <label class="check"><input type="checkbox" id="collector" name="collector" data-price="300"> <span><strong>Collector edition, +$300.</strong> Two proof rounds with a second artist pass, hand-numbered certificate, and a wooden presentation crate.</span></label>
           </fieldset>
 
           <fieldset>
@@ -124,6 +123,22 @@
             </div>
             <label class="notes" for="notes">Anything we should know? (optional) <textarea id="notes" name="notes" maxlength="600" rows="2" placeholder="For example: draw it with the hardtop on, or match the second photo's wheels."></textarea></label>
           </fieldset>
+
+          <fieldset>
+            <legend><span class="n">5</span> Ship to</legend>
+            <div class="plaque-fields">
+              <label for="ship_name">Recipient's name <input id="ship_name" name="ship_name" autocomplete="shipping name" required></label>
+              <label for="ship_phone">Phone, for delivery <input id="ship_phone" name="ship_phone" type="tel" autocomplete="shipping tel"></label>
+              <label for="ship_line1">Street address <input id="ship_line1" name="ship_line1" autocomplete="shipping address-line1" required></label>
+              <label for="ship_line2">Apt, suite (optional) <input id="ship_line2" name="ship_line2" autocomplete="shipping address-line2"></label>
+              <label for="ship_city">City <input id="ship_city" name="ship_city" autocomplete="shipping address-level2" required></label>
+              <div class="plaque-fields">
+                <label for="ship_state">State <input id="ship_state" name="ship_state" autocomplete="shipping address-level1" maxlength="2" placeholder="MA" required></label>
+                <label for="ship_zip">ZIP <input id="ship_zip" name="ship_zip" autocomplete="shipping postal-code" inputmode="numeric" maxlength="10" required></label>
+              </div>
+            </div>
+            <p class="hint">Ordering for a client? Ship straight to them. We put no pricing in the box.</p>
+          </fieldset>
         </div>
 
         <aside class="summary" aria-live="polite">
@@ -131,7 +146,6 @@
             <div><dt>Subject</dt><dd id="sCat">Automobile</dd></div>
             <div><dt>Style</dt><dd id="sStyle">Engraved</dd></div>
             <div><dt>Size</dt><dd id="sSize">16 × 20 in, Dark walnut</dd></div>
-            <div id="sColRow" hidden><dt>Collector edition</dt><dd>+$300</dd></div>
           </dl>
           <p class="total"><span>Total</span><strong id="total">$395</strong></p>
           <button class="btn wide" type="submit" id="pay">Continue to request my proof</button>
@@ -189,7 +203,7 @@
       <div class="sec-head"><p class="eyebrow">Questions</p></div>
       <div class="qs">
         <details><summary>Will it match my exact car or boat?</summary><p>Yes. We work from your photograph and check the proof detail by detail. If something is off, tell us and we redraw it.</p></details>
-        <details><summary>Can I order it as a gift for a client?</summary><p>Yes. Many orders come from dealers and brokers at closing. Enter their address at checkout, and we include no pricing in the box.</p></details>
+        <details><summary>Can I order it as a gift for a client?</summary><p>Yes. Many orders come from dealers and brokers at closing. Enter their address under Ship to, and we include no pricing in the box.</p></details>
         <details><summary>What if I don't have a good photo?</summary><p>Send what you have. A listing photo, a dealer photo, or a phone picture taken from the side all work.</p></details>
         <details><summary>When am I charged?</summary><p>Only when you approve your proof. You save a card when you order, and we charge it the moment you click approve. Your proof is watermarked; the print you receive is clean and full resolution.</p></details>
         <details><summary>How long does it take?</summary><p>Proof in 48 hours. After you approve, about two weeks to your door in the US.</p></details>

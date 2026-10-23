@@ -37,7 +37,6 @@ export default async (req: Request) => {
     const si = await getSetupIntent(s.setup_intent);
     if (!si.customer || !si.payment_method) throw new Error(`Setup ${s.setup_intent} has no customer or card`);
     order.card = { customer: si.customer, paymentMethod: si.payment_method };
-    saveShipping(order, s);
     order.status = "card_saved";
     log(order, `Card saved; ${money(order.price)} is due on approval`);
     await saveOrder(order);

@@ -21,12 +21,7 @@ export class StripeError extends Error {
   constructor(message: string, public code: string | null) { super(message); }
 }
 
-const shippingParams = {
-  "shipping_address_collection[allowed_countries][0]": "US",
-  "phone_number_collection[enabled]": "true",
-};
-
-// Step one: save the customer's card and shipping address. Nothing is charged until they approve the proof.
+// Step one: save the customer's card (the shipping address comes from our own order form). Nothing is charged until they approve the proof.
 // We create the Stripe customer first so the saved card is attached to it and can be charged later.
 export async function createCardSetup(opts: { orderId: string; name: string; email: string; amount: number; productName: string; successUrl: string; cancelUrl: string }) {
   const customer = await stripe<{ id: string }>("customers", { email: opts.email, name: opts.name, "metadata[orderId]": opts.orderId });
@@ -42,14 +37,7 @@ export async function createCardSetup(opts: { orderId: string; name: string; ema
     "setup_intent_data[description]": opts.productName,
     "custom_text[submit][message]": `You won't be charged now. We charge $${(opts.amount / 100).toLocaleString("en-US")} only when you approve your proof.`,
   };
-  try {
-    return await stripe<{ id: string; url: string }>("checkout/sessions", { ...params, ...shippingParams });
-  } catch (e) {
-    // If Stripe won't collect a shipping address on a card-saving page, take the billing address instead.
-    if (!(e instanceof StripeError) || !/shipping/i.test(e.message)) throw e;
-    console.warn("Setup checkout without shipping:", e.message);
-    return stripe<{ id: string; url: string }>("checkout/sessions", { ...params, billing_address_collection: "required", "phone_number_collection[enabled]": "true" });
-  }
+  return stripe<{ id: string; url: string }>("checkout/sessions", params);
 }
 
 export function getSetupIntent(id: string) {
