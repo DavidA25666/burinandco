@@ -19,8 +19,6 @@ export default async (req: Request) => {
     const category = String(form.get("category")) as CategoryId;
     const collector = form.get("collector") === "on" || form.get("collector") === "true";
     const notes = String(form.get("notes") ?? "").trim().slice(0, 600);
-    const line = (k: string) => String(form.get(k) ?? "").replace(/[\n\r]/g, " ").trim().slice(0, 38);
-    const plaque: [string, string] = [line("line1"), line("line2")];
 
     if (!(photo instanceof File) || photo.size === 0) return bad("Add a photograph.");
     if (photo.size > 5.5 * 1024 * 1024) return bad("That photo is too large. Use one under 5 MB.");
@@ -28,7 +26,6 @@ export default async (req: Request) => {
     if (!name) return bad("Add your name.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return bad("Check your email address.");
     if (!STYLES[style] || !SIZES[size] || !FRAMES[frame] || !CATEGORIES[category]) return bad("Choose a subject, style, size and frame.");
-    if (!plaque[0]) return bad("Add the first line of the plaque.");
 
     const id = crypto.randomUUID();
     const photoKey = `photo/${id}`;
@@ -37,7 +34,7 @@ export default async (req: Request) => {
     const order: Order = {
       id, createdAt: new Date().toISOString(), status: "awaiting_card",
       customer: { name, email }, category, style, size, frame, collector,
-      price: SIZES[size].price + (collector ? COLLECTOR_PRICE : 0), notes, plaque,
+      price: SIZES[size].price + (collector ? COLLECTOR_PRICE : 0), notes, plaque: ["", ""],
       photoKey, renders: [], changeRequests: [], history: [{ at: new Date().toISOString(), event: "Order started" }],
     };
 

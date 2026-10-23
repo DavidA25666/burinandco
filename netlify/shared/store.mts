@@ -18,7 +18,7 @@ export interface Order {
   collector: boolean;
   price: number;
   notes: string;
-  plaque: [string, string];
+  plaque: [string, string]; // Plaques are retired; older orders may still have one.
   photoKey: string;
   renders: { key: string; createdAt: string; note: string | null }[];
   changeRequests: { at: string; note: string; version: number }[];

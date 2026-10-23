@@ -53,7 +53,7 @@
         return;
       }
       const price = "$" + (d.price / 100).toLocaleString("en-US");
-      const plaque = `<strong>${esc(d.plaque[0])}${d.plaque[1] ? " / " + esc(d.plaque[1]) : ""}</strong>`;
+      const plaque = d.plaque && d.plaque[0] ? ` and check the spelling of your plaque: <strong>${esc(d.plaque[0])}${d.plaque[1] ? " / " + esc(d.plaque[1]) : ""}</strong>` : "";
       if (d.paymentDue) {
         panel.innerHTML = intro + `
           <p>You approved this proof, but your saved card didn't go through. Complete payment of ${price} and we'll send it to print.</p>
@@ -61,15 +61,15 @@
           <p class="form-error" id="err" role="alert"></p>`;
       } else {
       panel.innerHTML = intro + `
-        <p>Look closely at every badge, line and window, and check the spelling of your plaque: ${plaque}. The watermark is only on this preview; your print is clean, full resolution and on cotton rag.</p>
-        <p>${d.prepaid ? "Once you approve, we print, frame, plaque and ship it." : `When you approve, we charge the card you saved, ${price}, and then print, frame, plaque and ship it. Asking for changes costs nothing.`}</p>
+        <p>Look closely at every badge, line and window${plaque}. The watermark is only on this preview; your print is clean, full resolution and on cotton rag.</p>
+        <p>${d.prepaid ? "Once you approve, we print, frame and ship it." : `When you approve, we charge the card you saved, ${price}, and then print, frame and ship it. Asking for changes costs nothing.`}</p>
         <div class="actions">
           <button class="btn" id="approve">${d.prepaid ? "Approve and print" : `Approve and pay ${price}`}</button>
           <button class="btn secondary" id="change">Request a change</button>
         </div>
         <div id="change-box">
           <label for="note" class="label">What should we change?</label>
-          <textarea id="note" maxlength="1000" placeholder="For example: the wheels should have five spokes, and the plaque should read 1973, not 1974."></textarea>
+          <textarea id="note" maxlength="1000" placeholder="For example: the wheels should have five spokes, and the side mirrors are black, not chrome."></textarea>
           <div class="actions"><button class="btn" id="send-change">Send my notes</button></div>
         </div>
         <p class="form-error" id="err" role="alert"></p>`;

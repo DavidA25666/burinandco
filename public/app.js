@@ -60,8 +60,6 @@
     $("sSize").textContent = sizeLabel[size.value] + ", " + (big ? "olive" : label(v("frame")));
     $("sColRow").hidden = !collector;
     $("total").textContent = money(Number(size.dataset.price) + (collector ? 300 : 0));
-    $("pl1").textContent = $("line1").value || $("line1").placeholder;
-    $("pl2").textContent = $("line2").value || $("line2").placeholder;
   }
   form.addEventListener("input", update);
   form.addEventListener("change", update);
@@ -86,7 +84,6 @@
     const photo = $("photo").files[0];
     if (!photo) return showError("Add a photograph of what we're drawing.");
     if (photo.size > 5.5 * 1024 * 1024) return showError("That photo is too large. Use one under 5 MB.");
-    if (!$("line1").value.trim()) return showError("Add the first line of the plaque.");
     if (!$("name").value.trim()) return showError("Add your name.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($("email").value.trim())) return showError("Check your email address.");
 
