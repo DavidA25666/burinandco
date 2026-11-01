@@ -105,7 +105,7 @@ export const COLLECTOR_PRICE = 30000;
 export const SIZES: Record<SizeId, { name: string; price: number; aspect: string; inches: [number, number]; dpi: number; retired?: boolean }> = {
   "12x16": { name: "16 × 12 in", price: 29500, aspect: "4:3", inches: [16, 12], dpi: 300 },
   "16x20": { name: "20 × 16 in", price: 39500, aspect: "5:4", inches: [20, 16], dpi: 300 },
-  "24x30": { name: "30 × 24 in", price: 69500, aspect: "5:4", inches: [30, 24], dpi: 300 },
+  "24x30": { name: "30 × 24 in", price: 69500, aspect: "5:4", inches: [30, 24], dpi: 300, retired: true },
   "30x40": { name: "40 × 30 in", price: 125000, aspect: "4:3", inches: [40, 30], dpi: 240, retired: true },
 };
 
