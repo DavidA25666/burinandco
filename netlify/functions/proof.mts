@@ -81,7 +81,7 @@ export default async (req: Request) => {
     await saveOrder(order);
     await notifyOwner(
       `Approved: ${order.customer.name}'s portrait is ready to print`,
-      `<p>${esc(order.customer.name)} approved version ${v}${order.card ? ` and their card was charged ${amount}` : ""}. Download the print file and order it from the print lab, then mark it sent in your dashboard.</p>${admin}`,
+      `<p>${esc(order.customer.name)} approved version ${v}${order.card ? ` and their card was charged ${amount}` : ""}. Make the print file and send it to FinerWorks from your dashboard.</p>${admin}`,
     );
     return Response.json({ status: order.status });
   }

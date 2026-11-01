@@ -35,7 +35,10 @@ export interface Order {
   paymentIntentId?: string;
   paidAt?: string;
   printOrderRef?: string;
-  printFile?: { key: string; version: number; width: number; height: number; dpi: number; createdAt: string } | null;
+  // caption: the caption typeset into this file ("" for none). Missing on files made before it was recorded.
+  printFile?: { key: string; version: number; width: number; height: number; dpi: number; caption?: string; createdAt: string } | null;
+  // Set when the order went to FinerWorks through the API (printOrderRef holds the readable reference).
+  finerworks?: { orderId: string | number | null; confirmationId: string | null; testMode: boolean; productCode: string; printVersion: number } | null;
   printStatus?: "preparing" | "failed";
   printError?: string;
   lastError?: string;

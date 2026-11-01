@@ -37,6 +37,10 @@
   .gate { max-width: 360px; margin: 4rem auto; }
   .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: .75rem; gap: 1rem; }
   .toolbar label { font-size: .9rem; color: var(--muted); }
+  .fw-check { margin-top: 1rem; font-size: .92rem; }
+  .fw-check ul { margin: .4rem 0 0; padding-left: 1.1rem; overflow-wrap: anywhere; }
+  .fw-check .ok { color: #2E6B45; }
+  .fw-check .no { color: var(--error); }
   @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } .compare { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -55,6 +59,12 @@
     <div>
       <div class="toolbar"><strong>Orders</strong><label><input type="checkbox" id="show-all"> Show archived and unpaid</label></div>
       <div class="list" id="list"></div>
+      <div class="box fw-check">
+        <h3>FinerWorks connection</h3>
+        <p class="hint">Checks the API keys and that each size and frame's product code is found, with its price.</p>
+        <div class="actions"><button class="btn secondary" id="fw-check">Check FinerWorks</button></div>
+        <div id="fw-out"></div>
+      </div>
     </div>
     <div class="detail" id="detail"><p>Select an order.</p></div>
   </div>
@@ -134,6 +144,8 @@
     const canSendProof = n > 0 && ["needs_review", "proof_sent", "changes_requested"].includes(o.status);
     const canRegen = !["rendering", "sent_to_print", "awaiting_payment", "awaiting_card"].includes(o.status);
     const canPrint = o.status !== "sent_to_print" && n > 0;
+    const canFw = canPrint && o.paid && !o.printFileProblem && !!o.finerworksCode;
+    const fw = o.finerworks;
     const latest = o.renders[n - 1];
 
     $("#detail").innerHTML = `
@@ -184,16 +196,24 @@
 
       <div class="box">
         <h3>Send to print</h3>
-        ${o.status === "sent_to_print" ? `<p>Sent to print${o.printOrderRef ? `: <strong>${esc(o.printOrderRef)}</strong>` : ""}.</p>` : `
-        <p class="hint">${o.status === "customer_approved" ? "The customer approved v" + n + "." : "The customer hasn't approved yet."} Download the full-size file, order the print and frame from the lab, then record the lab's order number here.</p>
+        ${o.status === "sent_to_print" ? `<p>Sent to print${o.printOrderRef ? `: <strong>${esc(o.printOrderRef)}</strong>` : ""}.</p>
+        ${fw ? `<p class="hint">Sent through the FinerWorks API from v${fw.printVersion}, product code ${esc(fw.productCode)}. ${fw.testMode ? "Test orders aren't billed or printed; set FINERWORKS_LIVE to true in Netlify for real orders." : "Check its progress in your FinerWorks account."}</p>` : ""}` : `
+        <p class="hint">${o.status === "customer_approved" ? "The customer approved v" + n + "." : "The customer hasn't approved yet."} ${o.paid ? "" : o.status === "payment_due" ? "<strong>Their card was declined; sending unlocks once they pay on the payment page.</strong>" : "<strong>Not paid yet: the card is charged when the customer approves.</strong>"} Make the print file, then send it to FinerWorks (or order it by hand and record the lab's order number below).</p>
         ${o.printFile ? `<p><a href="${o.printFileUrl}" download="burin-${o.id.slice(0, 8)}-v${o.printFile.version}-print.jpg">Download print file</a> (v${o.printFile.version}, ${o.printFile.width} × ${o.printFile.height} px at ${o.printFile.dpi} dpi)${o.printFile.version !== n ? ". <strong>This is from an older version; make it again.</strong>" : ""}</p>` : ""}
         ${o.printStatus === "preparing" ? `<p>Making the print file (upscaling, then fitting to the frame). This takes a few minutes and the page refreshes on its own.</p>` : ""}
         ${o.printStatus === "failed" ? `<p class="form-error">Print file failed: ${esc(o.printError || "")}</p>` : ""}
         <div class="actions"><button class="btn secondary" data-act="prepare_print" ${n && o.printStatus !== "preparing" ? "" : "disabled"}>${o.printFile ? "Make the print file again" : `Make print file from v${n || ""}`}</button></div>
         ${latest ? `<p class="hint"><a href="${latest.url}" download="burin-${o.id.slice(0, 8)}-v${n}.png">Download the original v${n} render</a> (not upscaled).</p>` : ""}
+        <h3 style="margin-top:1.1rem">Send to FinerWorks</h3>
+        <p class="hint">Photo Rag, 2" ${esc(o.frameName.toLowerCase())} frame, Snow White mat, Reflection Control acrylic, ${esc(o.sizeName)} print. Ships Ground to the address above.
+          ${o.finerworksCode ? `Product code <code>${esc(o.finerworksCode)}</code>.` : `<strong>${esc(o.finerworksCodeEnv || "The product code")} isn't set in Netlify yet, so place this order by hand in FinerWorks.</strong>`}
+          ${o.printFileProblem && n ? `<strong>${esc(o.printFileProblem)}</strong>` : ""}
+          ${o.finerworksLive ? "<strong>Live: this places a real, billed order.</strong>" : "Test mode: creates a test order that isn't billed or printed."}</p>
+        <div class="actions"><button class="btn" data-act="send_to_finerworks" ${canFw ? "" : "disabled"}>Send v${n || ""} to FinerWorks</button></div>
+        <h3 style="margin-top:1.1rem">Or record a hand-placed order</h3>
         <input type="text" id="print-ref" placeholder="Lab order number (optional)">
-        ${o.status !== "customer_approved" ? `<label class="hint"><input type="checkbox" id="force"> Mark sent without customer approval (their card is not charged)</label>` : ""}
-        <div class="actions"><button class="btn" data-act="mark_sent_to_print" ${canPrint ? "" : "disabled"}>Mark v${n || ""} as sent to print</button></div>`}
+        ${o.status !== "customer_approved" ? `<label class="hint"><input type="checkbox" id="force"> Send or mark sent without customer approval (their card is not charged)</label>` : ""}
+        <div class="actions"><button class="btn secondary" data-act="mark_sent_to_print" ${canPrint ? "" : "disabled"}>Mark v${n || ""} as sent to print</button></div>`}
       </div>
 
       <p class="form-error" id="act-err" role="alert"></p>
@@ -216,6 +236,11 @@
       body.note = $("#print-ref")?.value || "";
       if (!confirm("Mark this order as sent to print?")) return;
     }
+    if (action === "send_to_finerworks") {
+      body.force = $("#force")?.checked || false;
+      const o = orders.find((x) => x.id === selected);
+      if (!confirm(o?.finerworksLive ? "Place a REAL FinerWorks order for this portrait? It will be billed and printed." : "Create a FinerWorks TEST order for this portrait?")) return;
+    }
     if (action === "prepare_print") body.force = $("#force")?.checked || false;
     if (action === "send_proof" && !confirm("Email this proof to the customer?")) return;
     if (action === "archive" && !confirm("Archive this order?")) return;
@@ -227,6 +252,17 @@
       renderList(); renderDetail();
       if (order.status === "rendering" || order.printStatus === "preparing") load().catch(() => {});
     } catch (ex) { err.textContent = ex.message; b.disabled = false; }
+  });
+
+  $("#fw-check").addEventListener("click", async (e) => {
+    const out = $("#fw-out");
+    e.target.disabled = true; out.innerHTML = "<p>Checking…</p>";
+    try {
+      const r = await api("POST", { action: "finerworks_check" });
+      out.innerHTML = `<p class="${r.credentials === "Connected" ? "ok" : "no"}">${esc(r.credentials)}${r.credentials === "Connected" ? (r.live ? " · LIVE orders" : " · test mode") : ""}</p>
+        ${r.products.length ? `<ul>${r.products.map((p) => `<li class="${p.ok ? "ok" : "no"}">${esc(p.label)}: ${esc(p.detail)}</li>`).join("")}</ul>` : ""}`;
+    } catch (ex) { out.innerHTML = `<p class="no">${esc(ex.message)}</p>`; }
+    e.target.disabled = false;
   });
 
   $("#show-all").addEventListener("change", () => load().catch(() => {}));
