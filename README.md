@@ -73,7 +73,6 @@ Set these in Netlify: **Project configuration → Environment variables**. Never
 5. When ready, set `FINERWORKS_LIVE=true` (and switch the app key to live in FinerWorks, with billing set up).
 
 The variable names follow the print size the site shows, so a size added to `catalog.mts` later needs its own pair.
-Until PR #9 retires 30 × 24, Check FinerWorks also lists its two codes; ignore those.
 
 ## Stripe webhook
 
