@@ -54,19 +54,15 @@ Set these in Netlify: **Project configuration → Environment variables**. Never
 | `REPLICATE_RESOLUTION` | Optional. Default `4K`. |
 | `FINERWORKS_WEB_API_KEY` | From FinerWorks (My Account → Web API). |
 | `FINERWORKS_APP_KEY` | From FinerWorks. |
-| `FINERWORKS_CODE_16X12_WALNUT` | FinerWorks product code for a 16 × 12 print in dark walnut. See "FinerWorks setup". |
-| `FINERWORKS_CODE_16X12_BLACKOAK` | Same, black oak. |
-| `FINERWORKS_CODE_20X16_WALNUT` | 20 × 16 print, dark walnut. |
-| `FINERWORKS_CODE_20X16_BLACKOAK` | 20 × 16 print, black oak. |
+| `FINERWORKS_CODE_...` | Optional. The four product codes are built in (`netlify/shared/finerworks.mts`); a variable such as `FINERWORKS_CODE_16X12_WALNUT` overrides one. |
 | `FINERWORKS_LIVE` | Leave unset for test orders (not billed or printed). Set to `true` to place real orders. FinerWorks also keeps orders in test mode while the app key itself is in test mode. |
 
 ## FinerWorks setup
 
 1. Add `FINERWORKS_WEB_API_KEY` and `FINERWORKS_APP_KEY` in Netlify.
-2. In FinerWorks' Print Online Setup Tool, build each product: Framed Giclee, Hahnemühle Photo Rag,
-   Nature Wood 2" frame in Dark Walnut or Black Oak, Snow White mat, Reflection Control acrylic,
-   frame 3" larger than the print (16 × 12 print in a 19 × 15 frame; 20 × 16 in a 23 × 19).
-   Copy each **product code** into the matching `FINERWORKS_CODE_...` variable (four in all), then redeploy.
+2. The product codes are already in `netlify/shared/finerworks.mts` (Photo Rag, Nature Wood 2" Dark Walnut or
+   Black Oak, Snow White mat, Reflection Control, frame 3" larger than the print). If you change the build, make it in
+   FinerWorks' Print Online Setup Tool and copy its product code there, or into a `FINERWORKS_CODE_...` variable in Netlify.
 3. In `/admin.html`, click **Check FinerWorks**. It confirms the keys and shows each code's product and price
    (expect about $145 for 16 × 12 and $199 for 20 × 16, before shipping).
 4. Send a paid test order to FinerWorks while `FINERWORKS_LIVE` is unset, and check it in FinerWorks.

@@ -20,9 +20,19 @@ export function codeEnvName(size: string, frame: string) {
   return s && f ? `FINERWORKS_CODE_${s.inches[0]}X${s.inches[1]}_${f}` : null;
 }
 
+// Product codes aren't secret, so they live here. A Netlify variable with the name above overrides one.
+// FinerWorks codes spell out the build: 5M62M8 Photo Rag, S{print}, F{frame id}, S{frame size},
+// J1 Snow White mat, S{mat window}, G2 Reflection Control, U1. 16x12 walnut confirmed in FinerWorks ($145).
+const CODES: Record<string, string> = {
+  FINERWORKS_CODE_16X12_WALNUT: "5M62M8S16X12F295S19X15J1S16X12G2U1",
+  FINERWORKS_CODE_16X12_BLACKOAK: "5M62M8S16X12F296S19X15J1S16X12G2U1",
+  FINERWORKS_CODE_20X16_WALNUT: "5M62M8S20X16F295S23X19J1S20X16G2U1",
+  FINERWORKS_CODE_20X16_BLACKOAK: "5M62M8S20X16F296S23X19J1S20X16G2U1",
+};
+
 export function finerworksCode(size: string, frame: string) {
   const name = codeEnvName(size, frame);
-  return name ? Netlify.env.get(name)?.trim() || null : null;
+  return name ? Netlify.env.get(name)?.trim() || CODES[name] || null : null;
 }
 
 // The codes the dashboard checks: every size and frame customers can order now.
