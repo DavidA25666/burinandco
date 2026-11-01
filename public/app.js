@@ -2,7 +2,7 @@
   const $ = (id) => document.getElementById(id);
   const form = $("order");
   const money = (n) => "$" + n.toLocaleString("en-US");
-  const sizeLabel = { "12x16": "16 × 12 in", "16x20": "20 × 16 in", "24x30": "30 × 24 in" };
+  const sizeLabel = { "12x16": "16 × 12 in", "16x20": "20 × 16 in" };
   const label = (input) => input.closest("label").textContent.trim();
 
   // Photo / rendering comparison: drag to reveal, with one sweep when it scrolls into view.
