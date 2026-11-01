@@ -62,7 +62,8 @@ async function call(path: string, body?: unknown) {
   try { data = JSON.parse(text); } catch { /* not JSON */ }
   if (!res.ok || data?.status?.success === false) {
     const msg = data?.status?.message || data?.message || data?.Message || text.slice(0, 300) || `HTTP ${res.status}`;
-    throw new Error(`FinerWorks ${path}: ${msg}`);
+    const debug = data?.status?.debug || (data?.ModelState ? JSON.stringify(data.ModelState) : "");
+    throw new Error(`FinerWorks ${path}: ${msg}${debug ? ` (${String(debug).slice(0, 300)})` : ""}`);
   }
   return data;
 }
@@ -124,7 +125,7 @@ export async function createFinerworksOrder(
   };
 }
 
-// Dashboard check: are the keys right, and does each product code resolve to the right build and price?
+// Dashboard check: are the keys right, and does each product code price out as the right build?
 export async function checkFinerworks() {
   const out: { credentials: string; live: boolean; products: { label: string; env: string; code: string | null; ok: boolean; detail: string }[] } = {
     credentials: "", live: finerworksLive(), products: [],
@@ -140,11 +141,13 @@ export async function checkFinerworks() {
     const code = finerworksCode(size, frame);
     if (!code) { out.products.push({ label, env, code, ok: false, detail: `${env} is not set` }); continue; }
     try {
-      const data = await call("get_product_details", { products: [{ product_sku: code, product_qty: 1 }] });
-      const p = data?.product_list?.[0] ?? data?.products?.[0] ?? data?.[0] ?? data;
-      const price = p?.total_price ?? p?.per_item_price ?? p?.price_details?.total_price;
-      const name = p?.name || p?.description_short || "";
-      out.products.push({ label, env, code, ok: p?.valid !== false, detail: `${name}${price != null ? ` · $${Number(price).toFixed(2)} before shipping` : ""}`.trim() || "Found" });
+      // get_prices takes product codes as well as inventory SKUs (get_product_details only knows inventory SKUs).
+      const data = await call("get_prices", { products: [{ product_qty: 1, product_sku: code }] });
+      const p = data?.prices?.[0];
+      if (!p) throw new Error("FinerWorks returned no price for this code.");
+      const price = p.total_price ?? p.product_price;
+      const parts = [p.add_frame_price != null && "frame", p.add_mat_1_price != null && "mat", p.add_glazing_price != null && "glazing"].filter(Boolean);
+      out.products.push({ label, env, code, ok: price != null, detail: `${price != null ? `$${Number(price).toFixed(2)} before shipping` : "No price returned"}${parts.length ? ` (print + ${parts.join(", ")})` : ""}${p.info ? ` · ${p.info}` : ""}` });
     } catch (e) {
       out.products.push({ label, env, code, ok: false, detail: e instanceof Error ? e.message : "Lookup failed" });
     }
