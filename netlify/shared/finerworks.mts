@@ -140,7 +140,7 @@ export async function checkFinerworks() {
     const code = finerworksCode(size, frame);
     if (!code) { out.products.push({ label, env, code, ok: false, detail: `${env} is not set` }); continue; }
     try {
-      const data = await call("get_product_details", [{ product_order_po: null, product_qty: 1, product_sku: code }]);
+      const data = await call("get_product_details", { products: [{ product_sku: code, product_qty: 1 }] });
       const p = data?.product_list?.[0] ?? data?.products?.[0] ?? data?.[0] ?? data;
       const price = p?.total_price ?? p?.per_item_price ?? p?.price_details?.total_price;
       const name = p?.name || p?.description_short || "";
