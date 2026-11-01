@@ -29,7 +29,7 @@ export default async (req: Request) => {
     const key = `print/${order.id}/v${version}`;
     await filesStore().set(key, new Uint8Array(file).buffer);
 
-    order.printFile = { key, version, width, height, dpi, createdAt: new Date().toISOString() };
+    order.printFile = { key, version, width, height, dpi, caption: order.caption ?? "", createdAt: new Date().toISOString() };
     delete order.printStatus;
     log(order, `Print file ready: v${version}, ${width} × ${height} px at ${dpi} dpi`);
     await saveOrder(order);

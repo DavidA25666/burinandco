@@ -5,6 +5,18 @@ import { triggerRender, triggerPrintFile } from "../shared/render-trigger.mts";
 import { sendEmail, button, esc } from "../shared/email.mts";
 import { SIZES, FRAMES, styleInfo, categoryInfo } from "../shared/catalog.mts";
 import { cleanCaption } from "../shared/caption.mts";
+import { createFinerworksOrder, checkFinerworks, finerworksCode, codeEnvName, finerworksLive } from "../shared/finerworks.mts";
+
+// Why the current print file can't go to the lab as it is, or null if it can.
+function printFileProblem(o: Order) {
+  const n = o.renders.length;
+  if (!n) return "There's no rendering to print.";
+  if (o.printStatus === "preparing") return "The print file is still being made.";
+  if (!o.printFile) return `Make the print file from v${n} first.`;
+  if (o.printFile.version !== n) return `The print file is from v${o.printFile.version}, but the newest version is v${n}. Make the print file again.`;
+  if ((o.printFile.caption ?? null) !== (o.caption ?? "")) return "The caption changed (or wasn't recorded) since the print file was made. Make the print file again.";
+  return null;
+}
 
 function view(o: Order, origin: string) {
   return {
@@ -16,6 +28,11 @@ function view(o: Order, origin: string) {
     photoUrl: fileUrl(origin, o.photoKey),
     renders: o.renders.map((r) => ({ ...r, url: fileUrl(origin, r.key) })),
     printFileUrl: o.printFile ? fileUrl(origin, o.printFile.key) : null,
+    printFileProblem: printFileProblem(o),
+    paid: !!o.paidAt,
+    finerworksCode: finerworksCode(o.size, o.frame),
+    finerworksCodeEnv: codeEnvName(o.size, o.frame),
+    finerworksLive: finerworksLive(),
   };
 }
 
@@ -35,6 +52,7 @@ export default async (req: Request) => {
     }
 
     const { action, id, note, force } = await req.json();
+    if (action === "finerworks_check") return Response.json(await checkFinerworks());
     const order = await getOrder(id);
     if (!order) return fail("Order not found.", 404);
 
@@ -73,7 +91,29 @@ export default async (req: Request) => {
         return Response.json({ order: view({ ...order, printStatus: "preparing" }, origin) });
       }
 
-      // No print lab is connected yet: download the file, order it from the lab, then record it here.
+      // Places the order with FinerWorks through its API: a test order until FINERWORKS_LIVE is "true".
+      case "send_to_finerworks": {
+        if (order.status === "sent_to_print") return fail("This order has already gone to print.");
+        if (order.status !== "customer_approved" && !force) return fail("The customer hasn't approved this proof yet.");
+        // Never ship unpaid work. Card orders are charged when the customer approves.
+        if (!order.paidAt) return fail(order.status === "payment_due" ? "The customer approved, but their card was declined. Wait for them to pay on the payment page." : "This order isn't paid yet. The card is charged when the customer approves the proof.");
+        const problem = printFileProblem(order);
+        if (problem) return fail(problem);
+        const code = finerworksCode(order.size, order.frame);
+        if (!code) return fail(`No FinerWorks product code is set for ${SIZES[order.size].name} with a ${FRAMES[order.frame].toLowerCase()} frame. Add ${codeEnvName(order.size, order.frame) ?? "it"} in Netlify, or place this one by hand in FinerWorks and mark it sent.`);
+        const file = order.printFile!;
+        const title = `Burin & Co. ${styleInfo(order.style).name}, ${SIZES[order.size].name}`;
+        const result = await createFinerworksOrder(order, { url: fileUrl(origin, file.key), width: file.width, height: file.height }, code, title);
+        const ref = result.confirmationId ?? result.orderId ?? "(no number returned)";
+        order.finerworks = { ...result, productCode: code, printVersion: file.version };
+        order.printOrderRef = `FinerWorks${result.testMode ? " TEST" : ""} ${ref}`;
+        order.status = "sent_to_print";
+        log(order, result.testMode ? `FinerWorks TEST order ${ref} created from v${file.version} (not billed or printed)` : `FinerWorks order ${ref} placed from v${file.version}`);
+        await saveOrder(order);
+        return Response.json({ order: view(order, origin) });
+      }
+
+      // Placed by hand in FinerWorks (or another lab): record it here.
       case "mark_sent_to_print": {
         if (order.status === "sent_to_print") return fail("This order is already marked as sent to print.");
         if (order.status !== "customer_approved" && !force) return fail("The customer hasn't approved this proof yet.");
