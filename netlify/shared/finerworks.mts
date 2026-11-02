@@ -83,7 +83,9 @@ function describeMethod(m: any) {
 export async function savedPaymentToken(): Promise<{ token: string; label: string }> {
   const override = Netlify.env.get("FINERWORKS_PAYMENT_TOKEN")?.trim();
   if (override) return { token: override, label: override === "invoice" ? "invoice (FINERWORKS_PAYMENT_TOKEN)" : "FINERWORKS_PAYMENT_TOKEN" };
-  const user = await call("get_user");
+  // FinerWorks' route is get_user?account_key=...; without the query parameter it answers 404
+  // ("No HTTP resource was found"). An empty key returns the account the API keys belong to.
+  const user = await call("get_user?account_key=");
   const profile = user?.user_account?.payment_profile_id;
   if (!profile) throw new Error("FinerWorks has no saved card on this account (no payment profile). Add a card under Billing & Payment in FinerWorks.");
   const data = await call(`get_payment_tokens?payment_profile_id=${encodeURIComponent(profile)}`);
