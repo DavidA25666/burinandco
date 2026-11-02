@@ -68,6 +68,31 @@ async function call(path: string, body?: unknown) {
   return data;
 }
 
+// FinerWorks has to be told how each order is paid, or it holds the order with "Cannot determine
+// payment method". Live orders pay with the default card saved in the FinerWorks account
+// (get_user -> payment_profile_id -> get_payment_tokens). Test orders send "xxxx", FinerWorks'
+// documented test token. FINERWORKS_PAYMENT_TOKEN in Netlify overrides the lookup (e.g. "invoice").
+function describeMethod(m: any) {
+  if (!m) return "default card";
+  if (typeof m === "string") return m;
+  const brand = m.card_type ?? m.brand ?? m.type ?? "";
+  const last4 = m.last4 ?? m.last_four ?? m.card_last_four ?? (typeof m.card_number === "string" ? m.card_number.slice(-4) : "");
+  return `${brand || "card"}${last4 ? ` ending ${last4}` : ""}`.trim();
+}
+
+export async function savedPaymentToken(): Promise<{ token: string; label: string }> {
+  const override = Netlify.env.get("FINERWORKS_PAYMENT_TOKEN")?.trim();
+  if (override) return { token: override, label: override === "invoice" ? "invoice (FINERWORKS_PAYMENT_TOKEN)" : "FINERWORKS_PAYMENT_TOKEN" };
+  const user = await call("get_user");
+  const profile = user?.user_account?.payment_profile_id;
+  if (!profile) throw new Error("FinerWorks has no saved card on this account (no payment profile). Add a card under Billing & Payment in FinerWorks.");
+  const data = await call(`get_payment_tokens?payment_profile_id=${encodeURIComponent(profile)}`);
+  const tokens: any[] = data?.payment_tokens ?? [];
+  const t = tokens.find((x) => x?.is_default && x?.token) ?? tokens.find((x) => x?.token);
+  if (!t) throw new Error("FinerWorks returned no saved card for this account. Add a card under Billing & Payment in FinerWorks.");
+  return { token: String(t.token), label: describeMethod(t.associated_payment_method) };
+}
+
 function splitName(full: string) {
   const parts = full.trim().split(/\s+/);
   const first = parts.shift() || full;
@@ -83,9 +108,12 @@ export async function createFinerworksOrder(
   if (!order.shipping?.address) throw new Error("This order has no shipping address.");
   const a = order.shipping.address;
   const testMode = !finerworksLive();
+  // Look the card up before submitting, so a missing card stops here instead of leaving an order on hold.
+  const paymentToken = testMode ? "xxxx" : (await savedPaymentToken()).token;
   const po = order.id.replace(/-/g, "").slice(0, 20);
   const data = await call("submit_orders_v2", {
     validate_only: false,
+    payment_token: paymentToken,
     orders: [{
       order_po: po,
       recipient: {
@@ -127,12 +155,18 @@ export async function createFinerworksOrder(
 
 // Dashboard check: are the keys right, and does each product code price out as the right build?
 export async function checkFinerworks() {
-  const out: { credentials: string; live: boolean; products: { label: string; env: string; code: string | null; ok: boolean; detail: string }[] } = {
-    credentials: "", live: finerworksLive(), products: [],
+  const out: { credentials: string; live: boolean; payment: { ok: boolean; detail: string } | null; products: { label: string; env: string; code: string | null; ok: boolean; detail: string }[] } = {
+    credentials: "", live: finerworksLive(), payment: null, products: [],
   };
   try {
     await call("test_my_credentials");
     out.credentials = "Connected";
+  try {
+    const t = await savedPaymentToken();
+    out.payment = { ok: true, detail: `Live orders will be paid with: ${t.label}` };
+  } catch (e) {
+    out.payment = { ok: false, detail: e instanceof Error ? e.message : "Couldn't find a saved card" };
+  }
   } catch (e) {
     out.credentials = e instanceof Error ? e.message : "Couldn't connect";
     return out;
