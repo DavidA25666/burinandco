@@ -260,6 +260,7 @@
     try {
       const r = await api("POST", { action: "finerworks_check" });
       out.innerHTML = `<p class="${r.credentials === "Connected" ? "ok" : "no"}">${esc(r.credentials)}${r.credentials === "Connected" ? (r.live ? " · LIVE orders" : " · test mode") : ""}</p>
+        ${r.payment ? `<p class="${r.payment.ok ? "ok" : "no"}">${esc(r.payment.detail)}</p>` : ""}
         ${r.products.length ? `<ul>${r.products.map((p) => `<li class="${p.ok ? "ok" : "no"}">${esc(p.label)}: ${esc(p.detail)}</li>`).join("")}</ul>` : ""}`;
     } catch (ex) { out.innerHTML = `<p class="no">${esc(ex.message)}</p>`; }
     e.target.disabled = false;
