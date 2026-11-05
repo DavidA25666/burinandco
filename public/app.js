@@ -87,7 +87,6 @@
     $("formErr").hidden = true;
     const photo = $("photo").files[0];
     if (!photo) return showError("Add a photograph of what we're drawing.");
-    if (photo.size > 5.5 * 1024 * 1024) return showError("That photo is too large. Use one under 5 MB.");
     if (!$("name").value.trim()) return showError("Add your name.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($("email").value.trim())) return showError("Check your email address.");
     for (const [id, msg] of [["ship_name", "Add the recipient's name."], ["ship_line1", "Add the street address."], ["ship_city", "Add the city."], ["ship_state", "Add the state."], ["ship_zip", "Add the ZIP code."]]) {
@@ -100,6 +99,7 @@
     track("InitiateCheckout", { num_items: 1 });
     try {
       const body = new FormData(form);
+      body.set("photo", await window.shrinkPhoto(photo));
       body.set("utm_first", localStorage.getItem("bc_utm_first") || "");
       body.set("utm_last", localStorage.getItem("bc_utm_last") || "");
       body.set("ad_consent", window.bcConsent && window.bcConsent() ? "granted" : "");

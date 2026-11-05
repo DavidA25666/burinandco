@@ -59,6 +59,7 @@
   </div>
 </main>
 
+<script src="/shrink-photo.js"></script>
 <script>
 (() => {
   const $ = (s) => document.querySelector(s);
@@ -132,31 +133,13 @@
     t.pick = pick; render();
   });
 
-  // Netlify turns away uploads over about 6 MB, and phone photos are often bigger.
-  // Shrink the photo in the browser first: longest side 4096 px, JPEG, under 4.5 MB.
-  async function shrink(file) {
-    if (file.size <= 4.5 * 1024 * 1024) return file;
-    const img = await createImageBitmap(file);
-    let side = Math.min(4096, Math.max(img.width, img.height)), blob = null;
-    for (let q = 0.92; ; q -= 0.08) {
-      const k = side / Math.max(img.width, img.height);
-      const c = document.createElement("canvas");
-      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
-      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-      blob = await new Promise((r) => c.toBlob(r, "image/jpeg", q));
-      if (blob.size <= 4.5 * 1024 * 1024 || q < 0.6) break;
-      side = Math.round(side * 0.85);
-    }
-    return new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" });
-  }
-
   $("#new").addEventListener("submit", async (e) => {
     e.preventDefault();
     const btn = $("#go"); btn.disabled = true; $("#new-err").textContent = "";
     try {
       const fd = new FormData(e.target);
       const photo = fd.get("photo");
-      if (photo instanceof File && photo.size) fd.set("photo", await shrink(photo));
+      if (photo instanceof File && photo.size) fd.set("photo", await window.shrinkPhoto(photo));
       await api("POST", fd); e.target.reset(); await load();
     }
     catch (ex) { $("#new-err").textContent = ex.message; }
