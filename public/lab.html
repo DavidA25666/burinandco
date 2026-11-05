@@ -41,13 +41,14 @@
   <div id="app" hidden>
     <form class="panel" id="new">
       <h2 style="font-size:1.6rem">Test a photo</h2>
+      <p class="form-error" id="lab-off" role="status" hidden></p>
       <p class="hint">Each photo is rendered by every model with the same prompt real orders use, so each test uses Replicate credit for every model.</p>
       <div class="new">
         <label><span class="label">Photo</span><input type="file" name="photo" accept="image/jpeg,image/png,image/webp" required></label>
         <label><span class="label">Name (optional)</span><input type="text" name="label" placeholder="911 RS, side view"></label>
         <label><span class="label">Subject</span><select name="category"><option value="automobile">Automobile</option><option value="yacht">Yacht</option><option value="aircraft">Aircraft</option><option value="building">Building</option><option value="other">Something else</option></select></label>
         <label><span class="label">Style</span><select name="style" id="style"></select></label>
-        <label><span class="label">Shape</span><select name="size"><option value="16x20">16 × 20 (5:4)</option><option value="30x40">30 × 40 (4:3)</option></select></label>
+        <label><span class="label">Shape</span><select name="size"><option value="16x20">20 × 16 (5:4)</option><option value="12x16">16 × 12 (4:3)</option></select></label>
         <div><button class="btn" type="submit" id="go">Render with all models</button></div>
       </div>
       <p class="form-error" id="new-err" role="alert"></p>
@@ -58,6 +59,7 @@
   </div>
 </main>
 
+<script src="/shrink-photo.js"></script>
 <script>
 (() => {
   const $ = (s) => document.querySelector(s);
@@ -74,6 +76,7 @@
     if (json) headers["Content-Type"] = "application/json";
     const res = await fetch("/api/lab", { method, headers, body: json ? JSON.stringify(body) : body });
     const data = await res.json().catch(() => ({}));
+    if (res.status === 413) throw new Error("That photo is still too large to upload. Try a smaller copy of it.");
     if (res.status === 401) { sessionStorage.removeItem("hg-admin"); showGate("Wrong password."); throw new Error("Wrong password."); }
     if (!res.ok) throw new Error(data.error || "Something went wrong.");
     return data;
@@ -81,7 +84,9 @@
   function showGate(msg) { $("#app").hidden = true; $("#gate").hidden = false; $("#gate-err").textContent = msg || ""; $("#pw").focus(); }
 
   async function load() {
-    ({ tests } = await api("GET"));
+    const data = await api("GET");
+    tests = data.tests;
+    $("#lab-off").hidden = !data.blocked; $("#lab-off").textContent = data.blocked || "";
     $("#gate").hidden = true; $("#app").hidden = false;
     render();
     clearTimeout(timer);
@@ -131,7 +136,12 @@
   $("#new").addEventListener("submit", async (e) => {
     e.preventDefault();
     const btn = $("#go"); btn.disabled = true; $("#new-err").textContent = "";
-    try { await api("POST", new FormData(e.target)); e.target.reset(); await load(); }
+    try {
+      const fd = new FormData(e.target);
+      const photo = fd.get("photo");
+      if (photo instanceof File && photo.size) fd.set("photo", await window.shrinkPhoto(photo));
+      await api("POST", fd); e.target.reset(); await load();
+    }
     catch (ex) { $("#new-err").textContent = ex.message; }
     btn.disabled = false;
   });

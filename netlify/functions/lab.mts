@@ -48,7 +48,7 @@ export default async (req: Request) => {
         return { ...t, styleName: styleInfo(t.style).name, categoryName: categoryInfo(t.category).name, photoUrl: fileUrl(origin, t.photoKey), results };
       }));
       tests.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-      return Response.json({ tests });
+      return Response.json({ tests, blocked: await labBlocked() });
     }
 
     if (req.headers.get("content-type")?.includes("application/json")) {
