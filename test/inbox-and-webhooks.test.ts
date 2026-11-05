@@ -87,6 +87,14 @@ describe("Stripe webhook", () => {
     expect(health.checks.find((c: any) => c.id === "stripe-webhook").details.lastEventAt).toBeTruthy();
   });
 
+  it("only warns about a missing webhook for orders paid since recording began", async () => {
+    const check = async () => ((await (await ops(signed("GET", "/api/ops/health"))).json()) as any).checks.find((c: any) => c.id === "stripe-webhook");
+    seed(order({ paidAt: "2026-11-03T12:00:00.000Z" }));
+    expect(await check()).toMatchObject({ status: "ok", details: { paidSinceRecording: false } });
+    seed(order({ paidAt: new Date().toISOString() }));
+    expect(await check()).toMatchObject({ status: "warn", details: { paidSinceRecording: true } });
+  });
+
   it("acknowledges every subscribed event type with 200", async () => {
     for (const type of ["checkout.session.completed", "checkout.session.async_payment_succeeded", "payment_intent.succeeded", "payment_intent.payment_failed", "charge.succeeded", "charge.updated", "charge.refunded", "charge.dispute.created", "charge.dispute.closed"]) {
       const res = await webhook(stripeRequest({ type, livemode: false, data: { object: { id: "x", metadata: {} } } }));

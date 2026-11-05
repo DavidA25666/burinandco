@@ -9,7 +9,11 @@ import { SIZES } from "../catalog.mts";
 import { activeSkus, priceCents, unitCostCents, floorCents, AI_CENTS_PER_ORDER, STRIPE_FEES, marginCents } from "../pricing.mts";
 import { inboxStatus } from "../inbox.mts";
 import { FEATURES, NOT_APPLICABLE, adminSections } from "./capabilities.mts";
+import { stripeBlock } from "./stripe-probe.mts";
 import type { Order } from "../store.mts";
+
+// When this store started recording Stripe webhook deliveries (HQ connection, PR #16 deployed).
+export const WEBHOOK_RECORDING_SINCE = "2026-11-05T01:00:00.000Z";
 
 export const DEFAULT_HEADLINE = "Portraits of your car, yacht or aircraft, drawn from your photograph";
 
@@ -52,15 +56,17 @@ export async function buildHealth(site: string, orders: Order[], settings: Setti
 
   // Webhooks
   const wh = await webhookStatus();
-  const paidOrders = orders.some((o) => o.paidAt);
+  // The store began recording webhook deliveries when HQ was connected (PR #16). Orders paid before that
+  // have no delivery on record, so only orders paid since then can show a missing webhook.
+  const paidOrders = orders.some((o) => o.paidAt && o.paidAt >= WEBHOOK_RECORDING_SINCE);
   if (!Netlify.env.get("STRIPE_WEBHOOK_SECRET")) {
     checks.push({ id: "stripe-webhook", category: "webhooks", name: "Stripe webhook", status: "fail", message: "STRIPE_WEBHOOK_SECRET is not set: payments can't be confirmed" });
   } else {
     const failing = wh.lastFail && (!wh.lastOk || wh.lastFail.at > wh.lastOk.at);
     checks.push({
       id: "stripe-webhook", category: "webhooks", name: "Stripe webhook", status: failing ? "fail" : wh.failures24h ? "warn" : !wh.lastOk && paidOrders ? "warn" : "ok",
-      message: wh.lastOk ? `Last event ${ago(wh.lastOk.at)} (${wh.lastOk.type}), ${wh.failures24h} failure${wh.failures24h === 1 ? "" : "s"} in 24h` : "No events received yet at /api/stripe/webhook",
-      details: { endpoint: "/api/stripe/webhook", lastEventAt: wh.lastOk?.at ?? null, failures24h: wh.failures24h },
+      message: wh.lastOk ? `Last event ${ago(wh.lastOk.at)} (${wh.lastOk.type}), ${wh.failures24h} failure${wh.failures24h === 1 ? "" : "s"} in 24h` : paidOrders ? "An order was paid but no Stripe event has arrived at /api/stripe/webhook" : `No Stripe events yet at /api/stripe/webhook, and no orders paid since recording began (${WEBHOOK_RECORDING_SINCE.slice(0, 10)})`,
+      details: { endpoint: "/api/stripe/webhook", lastEventAt: wh.lastOk?.at ?? null, failures24h: wh.failures24h, recordingSince: WEBHOOK_RECORDING_SINCE, paidSinceRecording: paidOrders },
     });
   }
 
@@ -106,6 +112,8 @@ export async function buildHealth(site: string, orders: Order[], settings: Setti
     generatedAt: new Date().toISOString(),
     status,
     checks,
+    // §2a: account, mode, key type and per-resource permissions (probed at most hourly), and the webhook.
+    stripe: await stripeBlock(`https://${SITE_DOMAIN}`, wh),
     // One scheduled job: the FinerWorks sync. Renders and print files run when an order or an owner action needs them.
     jobs: [syncJobView(await lastSyncRun())],
     storefront: {
