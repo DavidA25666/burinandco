@@ -43,6 +43,20 @@ export function adminSections() {
         { name: "retry_order", label: "Retry", scope: "row", destructive: false, params: schema({ order_id: orderId }, ["order_id"]) },
         { name: "refund_order", label: "Refund", scope: "row", destructive: true, confirm: "This refunds the customer through Stripe.", params: schema({ order_id: orderId, amount: { type: "number", title: "Amount ($)", description: "Leave empty for a full refund", minimum: 0.01 }, reason: { type: "string", title: "Reason", maxLength: 300 } }, ["order_id"]) },
         { name: "archive", label: "Archive", scope: "row", destructive: true, confirm: "Archive hides the order from the active list.", params: schema({ order_id: orderId }, ["order_id"]) },
+        { name: "resend_email", label: "Resend email", scope: "row", destructive: false, confirm_required: "conditional", confirm: "This emails the customer again: their proof, or their tracking once it has shipped.", params: schema({ order_id: orderId, which: { type: "string", title: "Which email", enum: ["proof", "shipping"], description: "Leave empty for the latest one" } }, ["order_id"]) },
+        { name: "mark_test", label: "Mark as test", scope: "row", destructive: false, params: schema({ order_id: orderId, on: { type: "boolean", title: "Test order", description: "Off makes it count as a real order again", default: true } }, ["order_id"]) },
+        { name: "refresh_status", label: "Refresh status", scope: "row", destructive: false, params: schema({ order_id: orderId }, ["order_id"]) },
+      ],
+    },
+    {
+      id: "cogs",
+      title: "Real cost of goods",
+      description: "What each paid order really cost: Stripe fee, FinerWorks, AI, and whether each number is actual or still an estimate.",
+      view: "table",
+      read_endpoint: "/api/ops/admin/cogs",
+      actions: [
+        { name: "refresh_status", label: "Refresh from Stripe and FinerWorks", scope: "row", destructive: false, params: schema({ order_id: orderId }, ["order_id"]) },
+        { name: "rerun_job", label: "Sync all FinerWorks orders now", scope: "section", destructive: false, params: schema({ job_id: { type: "string", title: "Job", enum: ["finerworks-sync"], default: "finerworks-sync" } }) },
       ],
     },
     {

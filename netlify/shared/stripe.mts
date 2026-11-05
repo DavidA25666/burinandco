@@ -1,5 +1,13 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
+// Every object we create carries the brand, so the store's records read the same as the other
+// Tenfold sites' (Burin also has its own Stripe account, so revenue already splits by account).
+export const SITE_KEY = "burinandco";
+const tag = (parent?: string) => {
+  const k = (name: string) => (parent ? `${parent}[metadata][${name}]` : `metadata[${name}]`);
+  return { [k("site")]: SITE_KEY, [k("brand")]: "Burin & Co." };
+};
+
 async function stripe<T>(path: string, params?: Record<string, string>, opts: { idempotencyKey?: string } = {}): Promise<T> {
   const key = Netlify.env.get("STRIPE_SECRET_KEY");
   if (!key) throw new Error("STRIPE_SECRET_KEY is not set");
@@ -24,7 +32,7 @@ export class StripeError extends Error {
 // Step one: save the customer's card (the shipping address comes from our own order form). Nothing is charged until they approve the proof.
 // We create the Stripe customer first so the saved card is attached to it and can be charged later.
 export async function createCardSetup(opts: { orderId: string; name: string; email: string; amount: number; productName: string; successUrl: string; cancelUrl: string }) {
-  const customer = await stripe<{ id: string }>("customers", { email: opts.email, name: opts.name, "metadata[orderId]": opts.orderId });
+  const customer = await stripe<{ id: string }>("customers", { email: opts.email, name: opts.name, "metadata[orderId]": opts.orderId, ...tag() });
   const params = {
     mode: "setup",
     currency: "usd",
@@ -34,6 +42,8 @@ export async function createCardSetup(opts: { orderId: string; name: string; ema
     client_reference_id: opts.orderId,
     "metadata[orderId]": opts.orderId,
     "setup_intent_data[metadata][orderId]": opts.orderId,
+    ...tag(),
+    ...tag("setup_intent_data"),
     "setup_intent_data[description]": opts.productName,
     "custom_text[submit][message]": `You won't be charged now. We charge $${(opts.amount / 100).toLocaleString("en-US")} only when you approve your proof.`,
   };
@@ -60,6 +70,7 @@ export function chargeSavedCard(opts: { orderId: string; customer: string; payme
     description: opts.description,
     receipt_email: opts.email,
     "metadata[orderId]": opts.orderId,
+    ...tag(),
   }, { idempotencyKey: `charge-${opts.orderId}-${opts.attempt}` });
 }
 
@@ -73,6 +84,8 @@ export function createPaymentCheckout(opts: { orderId: string; customer?: string
     client_reference_id: opts.orderId,
     "metadata[orderId]": opts.orderId,
     "payment_intent_data[metadata][orderId]": opts.orderId,
+    ...tag(),
+    ...tag("payment_intent_data"),
     "line_items[0][quantity]": "1",
     "line_items[0][price_data][currency]": "usd",
     "line_items[0][price_data][unit_amount]": String(opts.amount),
@@ -105,8 +118,17 @@ export function refundPayment(opts: { paymentIntent: string; amount?: number; re
     ...(opts.amount ? { amount: String(opts.amount) } : {}),
     reason: "requested_by_customer",
     "metadata[orderId]": opts.orderId,
+    ...tag(),
     ...(opts.reason ? { "metadata[note]": opts.reason.slice(0, 400) } : {}),
   }, { idempotencyKey: `refund-${opts.orderId}-${opts.requestId}` });
+}
+
+/** The charge's real Stripe fee, for orders whose webhook didn't record it. */
+export async function paymentFee(paymentIntent: string): Promise<{ chargeId: string | null; feeCents: number | null }> {
+  const pi = await stripe<any>(`payment_intents/${encodeURIComponent(paymentIntent)}?expand[]=latest_charge.balance_transaction`);
+  const ch = pi?.latest_charge;
+  const bt = ch && typeof ch === "object" ? ch.balance_transaction : null;
+  return { chargeId: typeof ch === "string" ? ch : ch?.id ?? null, feeCents: bt && typeof bt === "object" && typeof bt.fee === "number" ? bt.fee : null };
 }
 
 export function getBalanceTransaction(id: string) {

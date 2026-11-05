@@ -40,7 +40,16 @@ export interface Order {
   // caption: the caption typeset into this file ("" for none). Missing on files made before it was recorded.
   printFile?: { key: string; version: number; width: number; height: number; dpi: number; caption?: string; createdAt: string } | null;
   // Set when the order went to FinerWorks through the API (printOrderRef holds the readable reference).
-  finerworks?: { orderId: string | number | null; confirmationId: string | null; testMode: boolean; productCode: string; printVersion: number } | null;
+  finerworks?: {
+    orderId: string | number | null; confirmationId: string | null; testMode: boolean; productCode: string; printVersion: number;
+    // From FinerWorks' order status and order list (refresh_status, and the sync every 6 hours).
+    status?: string | null; checkedAt?: string;
+    shipments?: { trackingNumber: string | null; trackingUrl: string | null; carrier: string | null; shippedAt: string | null; deliveredAt: string | null }[];
+    costCents?: number | null;        // what FinerWorks charged for the order: the actual cost of goods
+  } | null;
+  finerworksError?: { at: string; message: string } | null; // the last failed Send to FinerWorks
+  shippingEmailSentAt?: string;
+  testOverride?: boolean | null;      // set by "Mark as test" in HQ; wins over the automatic rules
   printStatus?: "preparing" | "failed";
   printError?: string;
   lastError?: string;
@@ -55,6 +64,8 @@ export interface Order {
   refundedAt?: string;
   proofSentAt?: string;               // first proof sent
   sentToPrintAt?: string;
+  // Meta ads: the buyer's cookie choice at checkout, and what CAPI needs (only kept with consent).
+  ads?: { consent: boolean; fbp?: string | null; fbc?: string | null; ip?: string | null; ua?: string | null; url?: string | null; purchaseSentAt?: string } | null;
 }
 
 // Production data goes to the global store. Previews share a separate "-preview" store, so

@@ -8,11 +8,21 @@ import { SIZES, FRAMES, styleInfo, categoryInfo } from "../catalog.mts";
 
 export const ORDER_AI: AiCall["purpose"][] = ["order", "regeneration", "upscale"];
 
-/** Owners' own and test-key orders: left out of every number HQ shows. */
+/**
+ * Test orders, left out of every number HQ shows: "Mark as test" in HQ (either way) wins; then
+ * Stripe test keys, the owners' own emails, and any order refunded in full within 24 hours of payment.
+ */
 export function isTest(o: Order, s: Settings) {
+  if (o.testOverride != null) return o.testOverride;
   if (o.livemode === false) return true;
   const email = o.customer.email.toLowerCase();
-  return s.ownerTestEmails.some((e) => e.toLowerCase() === email);
+  if (s.ownerTestEmails.some((e) => e.toLowerCase() === email)) return true;
+  return refundedWithinADay(o);
+}
+
+export function refundedWithinADay(o: Order) {
+  if (!o.paidAt || !o.refundedAt || (o.refundedCents ?? 0) < o.price) return false;
+  return Date.parse(o.refundedAt) - Date.parse(o.paidAt) <= 24 * 3_600_000;
 }
 
 export const isPaid = (o: Order) => !!o.paidAt;
@@ -23,7 +33,10 @@ export function aiByOrder(calls: AiCall[]) {
   return m;
 }
 
-export interface OrderMoney { revenue: number; refunds: number; fees: number; feesActual: boolean; fulfillment: number; ai: number; profit: number }
+export interface OrderMoney { revenue: number; refunds: number; fees: number; feesActual: boolean; fulfillment: number; fulfillmentActual: boolean; ai: number; profit: number }
+
+/** What FinerWorks actually charged, once it reports the order total (live orders only). */
+export const finerworksActualCents = (o: Order) => (o.finerworks && !o.finerworks.testMode && o.finerworks.costCents != null ? o.finerworks.costCents : null);
 
 export function orderMoney(o: Order, s: Settings, ai: Map<string, number>): OrderMoney {
   const paid = isPaid(o);
@@ -33,9 +46,13 @@ export function orderMoney(o: Order, s: Settings, ai: Map<string, number>): Orde
   const fees = paid ? o.stripeFeeCents ?? feeCents(o.price) : 0;
   // FinerWorks is only paid for orders that are (or will be) printed: not for ones refunded before print.
   const printed = !!o.sentToPrintAt || o.status === "sent_to_print";
-  const fulfillment = paid && (printed || o.status !== "refunded") && !(o.finerworks?.testMode && printed) ? unitCostCents(o.size, s) : 0;
+  // The model cost (FinerWorks price with ground shipping, per size) is an estimate until FinerWorks
+  // reports what it charged for the order; that real amount then replaces it.
+  const actual = finerworksActualCents(o);
+  const charged = paid && (printed || o.status !== "refunded") && !(o.finerworks?.testMode && printed);
+  const fulfillment = charged ? actual ?? unitCostCents(o.size, s) : 0;
   const aiCents = ai.get(o.id) ?? 0;
-  return { revenue, refunds, fees, feesActual, fulfillment, ai: aiCents, profit: revenue - refunds - fees - fulfillment - aiCents };
+  return { revenue, refunds, fees, feesActual, fulfillment, fulfillmentActual: charged && actual != null, ai: aiCents, profit: revenue - refunds - fees - fulfillment - aiCents };
 }
 
 export const paidDate = (o: Order) => (o.paidAt ? nyDate(o.paidAt) : null);

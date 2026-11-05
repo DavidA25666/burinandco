@@ -4,6 +4,7 @@ import type { AiCall, Settings } from "../ops-store.mts";
 import { dateRange, addDays, nyDate } from "../ops-store.mts";
 import { SIZES, FRAMES, styleInfo, categoryInfo } from "../catalog.mts";
 import { unitCostCents, STRIPE_FEES } from "../pricing.mts";
+import { finerworksActualCents } from "./economics.mts";
 import {
   isTest, isPaid, aiByOrder, orderMoney, paidDate, isCommission, channelOf, median, pct, hoursBetween, ORDER_AI,
 } from "./economics.mts";
@@ -130,6 +131,9 @@ export function buildMetrics(i: MetricsInput) {
     unit_economics: (() => {
       const fixed = i.fixedCosts ?? [];
       const anyEstimatedFees = paidInRange.some((o) => o.stripeFeeCents == null);
+      const anyEstimatedFulfillment = paidInRange.some((o) => finerworksActualCents(o) == null);
+      const lines = paidInRange.length * 3;
+      const actualLines = paidInRange.reduce((t, o) => t + (o.stripeFeeCents != null ? 1 : 0) + (finerworksActualCents(o) != null ? 1 : 0), 0);
       return {
         money_unit: "cents",
         orders: T.orders, revenue: T.revenue, stripe_fees: T.fees, fulfillment_cost: T.fulfillment, ai_cost: T.ai,
@@ -137,7 +141,8 @@ export function buildMetrics(i: MetricsInput) {
         contribution: profitC, contribution_per_order: T.orders ? Math.round(profitC / T.orders) : 0,
         fixed_costs: fixed, marketing_spend: 0,
         net_profit: profitC - fixed.reduce((s, f) => s + f.amount, 0),
-        sources: { stripe_fees: anyEstimatedFees ? "estimated" : "actual", fulfillment_cost: "estimated", ai_cost: "estimated", revenue: "actual" },
+        sources: { stripe_fees: anyEstimatedFees ? "estimated" : "actual", fulfillment_cost: anyEstimatedFulfillment ? "estimated" : "actual", ai_cost: "estimated", revenue: "actual" },
+        cost_source_coverage: lines ? Math.round((actualLines / lines) * 100) / 100 : 0,
         ...(launch ? { launch_date: launch } : {}),
       };
     })(),

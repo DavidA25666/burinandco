@@ -195,3 +195,18 @@ legend { font: 400 26px/1.2 var(--display); margin-bottom: 18px; padding: 0; dis
 .foot-in { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 12px; padding-block: 22px; font: italic 400 16px/1.4 var(--display); color: var(--soft); }
 .foot .mark { font-style: normal; color: var(--ink); }
 [hidden] { display: none !important; }
+
+/* footer links, policy pages */
+.foot-links { display: flex; flex-wrap: wrap; gap: 6px 18px; width: 100%; font: 400 14px/1.4 var(--body); font-style: normal; }
+.foot-links a, .link { color: var(--soft); text-decoration: underline; text-underline-offset: 3px; }
+.foot-links a:hover, .link:hover { color: var(--ink); }
+.link { background: none; border: 0; padding: 0; font: inherit; cursor: pointer; }
+.legal-in { max-width: 760px; padding-block: 48px 72px; }
+.legal h1 { font-size: clamp(32px, 4vw, 44px); line-height: 1.08; margin: 10px 0 6px; }
+.legal h2 { font-size: 24px; margin: 36px 0 8px; }
+.legal p, .legal li { color: #2f2c27; }
+.legal ul { padding-left: 1.2em; }
+.legal li { margin-bottom: 6px; }
+.legal .updated { color: var(--soft); font-size: 14px; margin-top: 0; }
+.legal a { color: var(--ox); }
+

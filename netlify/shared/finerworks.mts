@@ -195,3 +195,43 @@ export async function checkFinerworks() {
   }
   return out;
 }
+
+// ---------- Order status, tracking and the real cost (refresh_status and the 6-hourly sync) ----------
+
+export interface FinerworksStatus {
+  status: string | null;
+  shipments: { trackingNumber: string | null; trackingUrl: string | null; carrier: string | null; shippedAt: string | null; deliveredAt: string | null }[];
+  costCents: number | null;
+}
+
+/** Pure: reads FinerWorks' fetch_order_status and list_orders answers for one order. */
+export function parseFinerworksStatus(statusData: any, listData: any, orderId: string | number): FinerworksStatus {
+  const same = (x: any) => String(x?.order_id ?? "") === String(orderId);
+  const st = (statusData?.orders ?? []).find(same) ?? null;
+  const listed = (listData?.orders ?? []).find(same) ?? null;
+  const shipments = (st?.shipments ?? []).map((s: any) => ({
+    trackingNumber: s?.tracking_number || null,
+    trackingUrl: s?.tracking_url || null,
+    carrier: s?.carrier || null,
+    shippedAt: s?.shipment_date || null,
+    deliveredAt: s?.delivery_date || null,
+  })).filter((s: any) => s.trackingNumber || s.trackingUrl);
+  const total = Number(listed?.total);
+  return {
+    status: st?.order_status_label ?? listed?.status ?? null,
+    shipments,
+    costCents: Number.isFinite(total) && total > 0 ? Math.round(total * 100) : null,
+  };
+}
+
+/** Asks FinerWorks for an order's production status, tracking, and what it charged. */
+export async function fetchFinerworksStatus(orderId: string | number): Promise<FinerworksStatus> {
+  const id = Number(orderId);
+  const ids = Number.isFinite(id) ? [id] : [];
+  if (!ids.length) throw new Error("This order has no FinerWorks order id.");
+  const [statusData, listData] = await Promise.all([
+    call("fetch_order_status", { order_ids: ids }),
+    call("list_orders", { order_ids: ids }).catch(() => null), // the cost is a bonus; status still counts
+  ]);
+  return parseFinerworksStatus(statusData, listData, id);
+}

@@ -9,7 +9,7 @@ import {
 } from "../shared/ops-store.mts";
 import { buildMetrics } from "../shared/ops/metrics.mts";
 import { buildHealth, buildCash } from "../shared/ops/health.mts";
-import { ordersView, buildAlerts, attributionView, liveView, reportView, orderIssue, orderActions } from "../shared/ops/views.mts";
+import { ordersView, buildAlerts, attributionView, liveView, reportView, orderIssue, orderActions, fulfillmentInfo } from "../shared/ops/views.mts";
 import { vendorsView } from "../shared/ops/vendors.mts";
 import { sectionActions, SETTING_KEYS } from "../shared/ops/capabilities.mts";
 import { aiByOrder, isTest, orderMoney, shortName, shortId, itemName } from "../shared/ops/economics.mts";
@@ -19,6 +19,7 @@ import { inboxView, inboxAction, InboxError } from "../shared/inbox.mts";
 import { deliver } from "../shared/email.mts";
 import { fileUrl } from "../shared/sign.mts";
 import { checkFinerworks, finerworksLive } from "../shared/finerworks.mts";
+import { runFinerworksSync } from "../shared/finerworks-sync.mts";
 import { SIZES, styleInfo, categoryInfo, FRAMES } from "../shared/catalog.mts";
 
 const SITE = Netlify.env.get("HQ_SITE_SLUG") || "burinandco";
@@ -45,9 +46,9 @@ async function metrics(q: URLSearchParams) {
 }
 
 async function alerts() {
-  const [orders, settings, aiMonthCents, webhook, disputes, outbox] = await Promise.all([listOrders(), getSettings(), aiSpendThisMonth(), webhookStatus(), listDisputes(), listOutbox()]);
+  const [orders, settings, aiMonthCents, webhook, disputes, outbox, aiCalls] = await Promise.all([listOrders(), getSettings(), aiSpendThisMonth(), webhookStatus(), listDisputes(), listOutbox(), listAiCalls()]);
   const env = Object.fromEntries(["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "RESEND_API_KEY", "FROM_EMAIL", "REPLICATE_API_TOKEN", "SITE_SECRET", "FINERWORKS_WEB_API_KEY", "FINERWORKS_APP_KEY"].map((n) => [n, !!Netlify.env.get(n)]));
-  return buildAlerts({ orders, settings, aiMonthCents, webhook, disputes, outbox, production: Netlify.context?.deploy?.context === "production", env, finerworksLive: finerworksLive() });
+  return buildAlerts({ orders, settings, aiMonthCents, webhook, disputes, outbox, production: Netlify.context?.deploy?.context === "production", env, finerworksLive: finerworksLive(), aiCalls });
 }
 
 function adminOrderRow(o: Order, settings: Settings, ai: Map<string, number>, origin: string) {
@@ -61,6 +62,9 @@ function adminOrderRow(o: Order, settings: Settings, ai: Map<string, number>, or
   if (o.status === "customer_approved" && o.renders.length && o.printStatus !== "preparing") actions.push("prepare_print");
   if (o.status === "customer_approved" && o.paidAt && !printFileProblem(o)) actions.push("send_to_finerworks", "mark_sent_to_print");
   if (o.status !== "archived") actions.push("archive");
+  if (["proof_sent", "payment_due"].includes(o.status) || o.finerworks?.shipments?.length) actions.push("resend_email");
+  actions.push("mark_test");
+  if (o.paymentIntentId || o.finerworks) actions.push("refresh_status");
   const attention = issue ? (issue.status === "failed" ? "critical" : "high") : o.status === "needs_review" || o.status === "changes_requested" || o.status === "customer_approved" ? "normal" : undefined;
   return {
     id: o.id,
@@ -91,6 +95,7 @@ function adminOrderRow(o: Order, settings: Settings, ai: Map<string, number>, or
     ...(o.paymentIntentId ? { stripe_url: `https://dashboard.stripe.com/${o.livemode === false ? "test/" : ""}payments/${o.paymentIntentId}` } : {}),
     error: o.lastError ?? o.printError ?? null,
     is_test: isTest(o, settings),
+    fulfillment: fulfillmentInfo(o),
     history: o.history.slice(-6).map((h) => `${h.at.slice(0, 16).replace("T", " ")} ${h.event}`).join("\n"),
     ...(attention ? { attention, attention_title: issue?.issue ?? o.status.replace(/_/g, " ") } : {}),
     actions: [...new Set(actions)],
@@ -158,6 +163,41 @@ async function adminRead(section: string, q: URLSearchParams, origin: string) {
       const items = (await listOutbox()).map((m) => ({ id: m.id, email_id: m.id, status: "failed", subject: m.subject, at: m.at, attempts: m.attempts, error: m.lastError, attention: "normal" }));
       return { items, summary: { failed: items.length } };
     }
+    case "cogs": {
+      const [orders, aiCalls] = await Promise.all([listOrders(), listAiCalls()]);
+      const ai = aiByOrder(aiCalls);
+      const today = nyDate();
+      const from = q.get("from") ?? `${today.slice(0, 7)}-01`;
+      const to = q.get("to") ?? today;
+      const paid = orders.filter((o) => o.paidAt && nyDate(o.paidAt) >= from && nyDate(o.paidAt) <= to);
+      const items = paid.map((o) => {
+        const m = orderMoney(o, settings, ai);
+        const test = isTest(o, settings);
+        const estimated = !(m.feesActual && m.fulfillmentActual);
+        return {
+          id: o.id, order_id: o.id, number: shortId(o), paid_at: o.paidAt, item: `${SIZES[o.size]?.name ?? o.size}, ${(FRAMES[o.frame] ?? o.frame).toLowerCase()}`,
+          status: test ? "test" : estimated ? "estimated" : "ok",
+          revenue_cents: m.revenue, refunds_cents: m.refunds,
+          stripe_fee_cents: m.fees, stripe_fee_source: m.feesActual ? "actual" : "estimated",
+          fulfillment_cents: m.fulfillment, fulfillment_source: m.fulfillmentActual ? "actual" : "estimated",
+          model_fulfillment_cents: unitCostCents(o.size, settings),
+          ai_cents: m.ai, ai_source: "estimated",
+          profit_cents: m.profit, is_test: test,
+          finerworks_status: o.finerworks?.status ?? null, checked_at: o.finerworks?.checkedAt ?? null,
+          actions: o.paymentIntentId || o.finerworks ? ["refresh_status"] : [],
+        };
+      });
+      const real = items.filter((r) => !r.is_test);
+      const sum = (k: "revenue_cents" | "refunds_cents" | "stripe_fee_cents" | "fulfillment_cents" | "ai_cents" | "profit_cents") => real.reduce((t, r) => t + r[k], 0);
+      const lines = real.length * 2;
+      const actual = real.reduce((t, r) => t + (r.stripe_fee_source === "actual" ? 1 : 0) + (r.fulfillment_source === "actual" ? 1 : 0), 0);
+      return {
+        columns: ["number", "paid_at", "item", "revenue_cents", "stripe_fee_cents", "stripe_fee_source", "fulfillment_cents", "fulfillment_source", "ai_cents", "profit_cents"],
+        items,
+        summary: { orders: real.length, revenue_cents: sum("revenue_cents"), refunds_cents: sum("refunds_cents"), stripe_fees_cents: sum("stripe_fee_cents"), fulfillment_cents: sum("fulfillment_cents"), ai_cents: sum("ai_cents"), profit_cents: sum("profit_cents"), actual_share: lines ? Math.round((actual / lines) * 100) / 100 : 0 },
+        note: `${from} to ${to}, test orders shown but not totalled. FinerWorks cost is the per-size model (Admin → Store settings) until FinerWorks reports what it charged for the order, then it's actual. The sync asks every 6 hours. Stripe fees are actual once the charge settles. AI is Replicate list prices per run.`,
+      };
+    }
     case "audit": {
       const items = (await listAudit(150)).map((a, i) => ({ id: `${a.at}-${i}`, status: "ok", at: a.at, by: a.by ?? "unknown", action: a.action, details: JSON.stringify(a.details).slice(0, 400) }));
       return { items };
@@ -203,7 +243,8 @@ async function runAction(body: any, origin: string, requestId: string | null): P
     const amount = params.amount != null && params.amount !== "" ? Math.round(Number(params.amount) * 100) : null;
     if (amount != null && !(amount > 0)) return no(400, "invalid_params", "Amount must be a positive number of dollars.");
     try {
-      const r = await runOrderAction(origin, action, order, { note: params.note ?? params.caption ?? null, amountCents: amount, reason: params.reason ?? null, requestId, force: false });
+      const note = params.note ?? params.caption ?? params.which ?? (params.on != null ? String(params.on) : null);
+      const r = await runOrderAction(origin, action, order, { note, amountCents: amount, reason: params.reason ?? null, requestId, force: false });
       await audit(by, `order:${action}`, { orderId: order.id, params });
       return ok(r.message, { order_id: order.id, status: r.order.status });
     } catch (e) {
@@ -213,8 +254,13 @@ async function runAction(body: any, origin: string, requestId: string | null): P
   }
 
   switch (action) {
-    case "rerun_job":
-      return no(404, "job_not_found", "Burin & Co. has no scheduled jobs.");
+    case "rerun_job": {
+      const job = String(params.job_id ?? params.jobId ?? params.id ?? "finerworks-sync");
+      if (job !== "finerworks-sync") return no(404, "job_not_found", `No job "${job}". Burin & Co. has one job: finerworks-sync.`);
+      const run = await runFinerworksSync();
+      await audit(by, "rerun_job", { job, result: run });
+      return run.status === "ok" ? ok(`FinerWorks sync ran: ${run.message}.`, run) : no(502, "job_failed", `FinerWorks sync: ${run.message}.`, run);
+    }
 
     case "pause_site":
       await updateSettings(by, "pause_site", (s) => { s.maintenance = true; s.maintenanceReason = params.reason ? String(params.reason).slice(0, 200) : null; });

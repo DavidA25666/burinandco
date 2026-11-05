@@ -19,5 +19,6 @@
   const sid = new URLSearchParams(location.search).get("session_id");
   if (sid) fetch("/api/checkout-return", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sid }) }).catch(() => {});
 </script>
+<script src="/consent.js" defer></script>
 </body>
 </html>

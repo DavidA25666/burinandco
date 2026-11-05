@@ -4,6 +4,7 @@
 import { getSetupIntent } from "./stripe.mts";
 import { getOrder, saveOrder, log, ordersStore, type Order } from "./store.mts";
 import { triggerRender } from "./render-trigger.mts";
+import { sendPurchase } from "./meta.mts";
 import { notifyOwner, sendEmail, button, esc } from "./email.mts";
 import { SIZES, FRAMES, styleInfo, categoryInfo } from "./catalog.mts";
 
@@ -66,6 +67,7 @@ export async function handleCompletedSession(origin: string, s: any) {
     order.paymentIntentId = s.payment_intent;
     order.paidAt = new Date().toISOString();
     log(order, `Paid ${money(s.amount_total)} on approval (payment page)`);
+    await sendPurchase(order);
     await saveOrder(order);
     await notifyOwner(
       `Approved and paid: ${order.customer.name}'s portrait is ready to print`,

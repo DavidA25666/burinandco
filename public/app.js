@@ -4,6 +4,12 @@
   const money = (n) => "$" + n.toLocaleString("en-US");
   const sizeLabel = { "12x16": "16 × 12 in", "16x20": "20 × 16 in" };
   const label = (input) => input.closest("label").textContent.trim();
+  // Meta Pixel events (consent.js only sends them after the visitor accepts cookies).
+  const track = (event, extra) => {
+    if (!window.bcTrack) return;
+    const size = form.querySelector('input[name="size"]:checked');
+    window.bcTrack(event, Object.assign({ content_type: "product", content_ids: [size.value], content_name: "Framed portrait " + sizeLabel[size.value], currency: "USD", value: Number(size.dataset.price) }, extra || {}));
+  };
 
   // Photo / rendering comparison: drag to reveal, with one sweep when it scrolls into view.
   document.querySelectorAll(".ba").forEach((ba) => {
@@ -64,6 +70,7 @@
   $("photo").addEventListener("change", (e) => {
     const f = e.target.files && e.target.files[0];
     if (!f) return;
+    if (!form.dataset.carted) { form.dataset.carted = "1"; track("AddToCart"); }
     const img = $("photoPrev");
     img.src = URL.createObjectURL(f);
     img.hidden = false;
@@ -90,10 +97,12 @@
     const btn = $("pay");
     btn.disabled = true;
     btn.textContent = "Opening secure card page…";
+    track("InitiateCheckout", { num_items: 1 });
     try {
       const body = new FormData(form);
       body.set("utm_first", localStorage.getItem("bc_utm_first") || "");
       body.set("utm_last", localStorage.getItem("bc_utm_last") || "");
+      body.set("ad_consent", window.bcConsent && window.bcConsent() ? "granted" : "");
       const res = await fetch("/api/orders", { method: "POST", body });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.checkoutUrl) throw new Error(data.error || "Checkout couldn't start. Try again in a moment.");
@@ -106,6 +115,7 @@
   });
 
   update();
+  track("ViewContent");
 
   // Live prices, headline and maintenance mode, all set from Tenfold HQ.
   fetch("/api/catalog").then((r) => r.ok ? r.json() : null).then((c) => {

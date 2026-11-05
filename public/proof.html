@@ -41,6 +41,14 @@
     return data;
   }
 
+  // Meta Pixel Purchase, once per order (consent.js sends it only if cookies were accepted).
+  function firePurchase(pu) {
+    if (!pu || !window.bcTrack) return;
+    const key = "bc_px_" + pu.eventId;
+    try { if (localStorage.getItem(key)) return; localStorage.setItem(key, "1"); } catch (e) { /* private mode */ }
+    window.bcTrack("Purchase", { content_type: "product", content_ids: [pu.size], currency: pu.currency, value: pu.value, num_items: 1 }, pu.eventId);
+  }
+
   const sid = p.get("session_id");
   const returned = sid
     ? fetch("/api/checkout-return", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sid }) }).catch(() => {})
@@ -48,6 +56,7 @@
   returned.then(() => fetch(`/api/proof?o=${encodeURIComponent(o || "")}&t=${encodeURIComponent(t || "")}`))
     .then(async (r) => { const d = await r.json(); if (!r.ok) throw new Error(d.error); return d; })
     .then((d) => {
+      firePurchase(d.purchase);
       document.getElementById("frame").className = `frame ${d.frame === "Black oak" ? "ebony" : "walnut"}`;
       if (d.renderUrl) document.getElementById("render").src = d.renderUrl;
       const intro = `<h1>Your ${esc(d.subject)}, ready for review.</h1>
@@ -87,6 +96,7 @@
         try {
           const r = await respond("approve");
           if (r.checkoutUrl) { location.href = r.checkoutUrl; return; }
+          firePurchase(r.purchase);
           finished(`<h2>Approved. Thank you!</h2><p>${d.prepaid ? "" : `We've charged ${price} to your saved card. `}Your portrait goes to print next. We'll email tracking details when it ships.</p>`);
         }
         catch (ex) { err.textContent = ex.message; e.target.disabled = false; }
@@ -103,5 +113,6 @@
     .catch((ex) => { panel.innerHTML = `<h1>Proof not found</h1><p>${esc(ex.message || "This proof link isn't valid.")}</p>`; });
 })();
 </script>
+<script src="/consent.js"></script>
 </body>
 </html>
