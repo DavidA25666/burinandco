@@ -147,7 +147,7 @@ async function adminRead(section: string, q: URLSearchParams, origin: string) {
           month_spent_cents: sum(month), monthly_cap_cents: settings.aiMonthlyCapCents,
           cap_used_percent: settings.aiMonthlyCapCents ? Math.round((sum(month) / settings.aiMonthlyCapCents) * 100) : 0,
           orders_cents: sum(month.filter((c) => c.purpose !== "lab")), lab_cents: sum(month.filter((c) => c.purpose === "lab")),
-          lab_enabled: settings.labEnabled ? 1 : 0, cap_blocks_regenerations: settings.aiCapBlocksOrders ? 1 : 0,
+          lab_enabled: 1, cap_blocks_regenerations: settings.aiCapBlocksOrders ? 1 : 0,
         },
         note: "No scheduled or background AI jobs. AI runs only for a paid commission (render, regenerate, print upscale) or the model lab. Costs are Replicate list prices per image.",
       };
@@ -348,14 +348,7 @@ async function runAction(body: any, origin: string, requestId: string | null): P
       const v = onOff(params.on);
       if (v == null) return no(400, "invalid_params", "on must be true or false.");
       await updateSettings(by, "set_ai_cap_blocks_orders", (s) => { s.aiCapBlocksOrders = v; });
-      return ok(v ? "At the cap, regenerations and print upscales stop too." : "At the cap, only the model lab stops.");
-    }
-
-    case "set_lab": {
-      const v = onOff(params.on);
-      if (v == null) return no(400, "invalid_params", "on must be true or false.");
-      await updateSettings(by, "set_lab", (s) => { s.labEnabled = v; });
-      return ok(v ? "Model lab on (/lab.html). Each test costs about $0.80." : "Model lab off.");
+      return ok(v ? "At the cap, regenerations and print upscales stop too." : "At the cap, HQ alerts but nothing stops.");
     }
 
     case "check_finerworks": {

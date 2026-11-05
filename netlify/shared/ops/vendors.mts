@@ -49,8 +49,8 @@ export function vendorsView(orders: Order[], s: Settings, aiCalls: AiCall[], tod
         first_seen: firstSeen(aiCalls.filter((c) => c.purpose !== "lab").map((c) => c.date)),
       },
       {
-        id: "replicate-lab", name: "Replicate (model lab)", used_for: "Owner tests on the model-compare page (switched off by default)",
-        category: "development", billing_model: "usage", status: s.labEnabled ? "live" : "inactive",
+        id: "replicate-lab", name: "Replicate (model lab)", used_for: "Owner tests on the model-compare page ",
+        category: "development", billing_model: "usage", status: "live",
         billing_url: "https://replicate.com/account/billing", included_in: null, source: "estimated",
         daily: series((add) => { for (const c of aiCalls) if (c.purpose === "lab") add(c.date, c.cents); }),
         first_seen: firstSeen(aiCalls.filter((c) => c.purpose === "lab").map((c) => c.date)),

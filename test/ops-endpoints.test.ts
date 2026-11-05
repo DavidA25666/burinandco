@@ -196,16 +196,18 @@ describe("actions", () => {
     expect(job.json.code).toBe("job_not_found");
   });
 
-  it("keeps the model lab off until HQ turns it on, and sets the AI budget", async () => {
+  it("never lets HQ block the model lab, and sets the AI budget", async () => {
     const lab = (await import("../netlify/functions/lab.mts")).default;
-    const req = () => new Request("https://burinandco.com/api/lab", { method: "POST", headers: { "x-admin-password": "pw", "content-type": "application/json" }, body: JSON.stringify({ id: "t", retry: "google/nano-banana-pro" }) });
+    const req = () => new Request("https://burinandco.com/api/lab", { method: "POST", headers: { "x-admin-password": "pw", "content-type": "application/json" }, body: JSON.stringify({ id: "t", pick: null }) });
     const { env } = await import("./setup.ts");
     env.set("ADMIN_PASSWORD", "pw");
-    expect((await lab(req())).status).toBe(403);
+    expect((await lab(req())).status).not.toBe(403);
+    const caps = (await call(signed("GET", "/api/ops/capabilities"))).json;
+    expect(JSON.stringify(caps)).not.toContain("set_lab");
     expect((await call(signed("POST", "/api/ops/actions", JSON.stringify({ action: "set_ai_cap", params: { dollars: 50 } })))).json.ok).toBe(true);
     const ai = (await call(signed("GET", "/api/ops/admin/ai"))).json;
     expect(ai.summary.monthly_cap_cents).toBe(5000);
-    expect(ai.summary.lab_enabled).toBe(0);
+    expect(ai.summary.lab_enabled).toBe(1);
   });
 });
 

@@ -100,8 +100,8 @@ export async function buildHealth(site: string, orders: Order[], settings: Setti
   checks.push({
     id: "ai-replicate", category: "ai", name: "Replicate (AI renders)",
     status: !Netlify.env.get("REPLICATE_API_TOKEN") ? "fail" : spent >= cap ? "fail" : spent >= cap * 0.75 ? "warn" : "ok",
-    message: !Netlify.env.get("REPLICATE_API_TOKEN") ? "REPLICATE_API_TOKEN is not set" : `$${(spent / 100).toFixed(2)} of the $${(cap / 100).toFixed(2)} monthly AI budget used. Model lab ${settings.labEnabled ? "on" : "off"}. No scheduled AI jobs.`,
-    details: { spentCents: spent, capCents: cap, labEnabled: settings.labEnabled, model: Netlify.env.get("REPLICATE_MODEL") || "openai/gpt-image-2.5-sunburst" },
+    message: !Netlify.env.get("REPLICATE_API_TOKEN") ? "REPLICATE_API_TOKEN is not set" : `$${(spent / 100).toFixed(2)} of the $${(cap / 100).toFixed(2)} monthly AI budget used. Model lab always on (owner-only). No scheduled AI jobs.`,
+    details: { spentCents: spent, capCents: cap, labEnabled: true, model: Netlify.env.get("REPLICATE_MODEL") || "openai/gpt-image-2.5-sunburst" },
   });
 
   const outbox = await listOutbox();

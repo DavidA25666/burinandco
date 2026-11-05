@@ -3,16 +3,9 @@ import { labStore, filesStore } from "../shared/store.mts";
 import { isAdmin, fileUrl, sign } from "../shared/sign.mts";
 import { LAB_STYLES, SIZES, CATEGORIES, type StyleId, type SizeId, type CategoryId, styleInfo, categoryInfo } from "../shared/catalog.mts";
 import { COMPARE_MODELS } from "../shared/replicate.mts";
-import { getSettings, aiSpendThisMonth } from "../shared/ops-store.mts";
 
-// The lab spends AI money on owner tests, so it only runs when it is switched on in Tenfold HQ
-// (Admin → AI spend → Lab) and this month's AI budget isn't used up.
-async function labBlocked() {
-  const s = await getSettings();
-  if (!s.labEnabled) return "The model lab is switched off. Turn it on in Tenfold HQ (Admin → AI spend).";
-  if ((await aiSpendThisMonth()) >= s.aiMonthlyCapCents) return "This month's AI budget is used up. Raise it in Tenfold HQ to run the lab.";
-  return null;
-}
+// The lab is always available to the owners (behind the dashboard password). Tenfold HQ can see
+// what it spends in the AI ledger but cannot switch it off or block it.
 
 // Compare page: render one photo with every model in COMPARE_MODELS so you can pick the most faithful one.
 interface LabTest { id: string; createdAt: string; label: string; style: StyleId; category: CategoryId; size: SizeId; photoKey: string; pick?: string | null }
@@ -48,15 +41,13 @@ export default async (req: Request) => {
         return { ...t, styleName: styleInfo(t.style).name, categoryName: categoryInfo(t.category).name, photoUrl: fileUrl(origin, t.photoKey), results };
       }));
       tests.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-      return Response.json({ tests, blocked: await labBlocked() });
+      return Response.json({ tests });
     }
 
     if (req.headers.get("content-type")?.includes("application/json")) {
       // Record which model got this photo most right.
       const { id, pick, retry } = await req.json();
       if (retry) {
-        const blocked = await labBlocked();
-        if (blocked) return fail(blocked, 403);
         // Re-run one model that failed.
         if (!COMPARE_MODELS.some((m) => m.id === retry)) return fail("Unknown model.");
         await store.setJSON(`result/${id}/${retry.replace("/", "--")}`, { model: retry, status: "rendering" });
@@ -71,8 +62,6 @@ export default async (req: Request) => {
       return Response.json({ ok: true });
     }
 
-    const blocked = await labBlocked();
-    if (blocked) return fail(blocked, 403);
     const form = await req.formData();
     const photo = form.get("photo");
     const style = String(form.get("style") ?? "") as StyleId;

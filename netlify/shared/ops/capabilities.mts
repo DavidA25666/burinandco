@@ -79,7 +79,6 @@ export function adminSections() {
       actions: [
         { name: "set_ai_cap", label: "Set monthly AI budget", scope: "section", destructive: false, params: schema({ dollars: { type: "number", title: "Monthly budget ($)", minimum: 1, maximum: 5000 } }, ["dollars"]) },
         { name: "set_ai_cap_blocks_orders", label: "Budget also blocks regenerations", scope: "section", destructive: false, params: schema({ on: { type: "boolean", title: "Block regenerations and print upscales at the cap" } }, ["on"]) },
-        { name: "set_lab", label: "Model lab on/off", scope: "section", destructive: false, confirm_required: "conditional", confirm: "The lab renders one photo with four models (about $0.80 a test).", params: schema({ on: { type: "boolean", title: "Lab on" } }, ["on"]) },
       ],
     },
     {

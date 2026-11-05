@@ -104,8 +104,8 @@ Burin & Co. is run from Tenfold HQ (hq.tenfoldcommerce.com) through the signed A
 - Prices: the defaults are in `catalog.mts`; HQ's prices and seasonal prices override them and are refused
   below break-even (FinerWorks cost + AI + Stripe fees). The storefront reads them from `/api/catalog`.
 - Owner emails are off by default; HQ alerts replace them. Turn them back on in HQ → Admin → Store settings.
-- AI: every Replicate run is logged with its estimated cost. The model lab (`/lab.html`) is off until it's
-  switched on in HQ, and there's a monthly AI budget (alert at 75%). No AI runs on a schedule.
+- AI: every Replicate run is logged with its estimated cost. The model lab (`/lab.html`) is always on for
+  the owners; HQ sees its spend but can't switch it off. There's a monthly AI budget (alert at 75%). No AI runs on a schedule.
 - Support mail: customer emails reply to `support@burinandco.com`. Resend receives it and posts to
   `/api/inbound/email`; mail for the other Tenfold brands is ignored.
 
