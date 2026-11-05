@@ -1,6 +1,7 @@
 // GET /api/ops/health (§2, §15, §16) and the cash block (§3b). These call Stripe, Resend and
 // FinerWorks, so the slow reads are cached for a few minutes.
 import { cached, webhookStatus, listOutbox, aiSpendThisMonth, type Settings } from "../ops-store.mts";
+import { lastSyncRun, syncJobView } from "../finerworks-sync.mts";
 import { getBalance, listPayouts, listStripeDisputes, stripeTestMode } from "../stripe.mts";
 import { savedPaymentToken, finerworksLive } from "../finerworks.mts";
 import { SITE_DOMAIN, supportAddress } from "../email.mts";
@@ -105,8 +106,8 @@ export async function buildHealth(site: string, orders: Order[], settings: Setti
     generatedAt: new Date().toISOString(),
     status,
     checks,
-    // No scheduled jobs: renders and print files run when an order or an owner action needs them.
-    jobs: [],
+    // One scheduled job: the FinerWorks sync. Renders and print files run when an order or an owner action needs them.
+    jobs: [syncJobView(await lastSyncRun())],
     storefront: {
       maintenance: settings.maintenance,
       maintenanceReason: settings.maintenanceReason,
