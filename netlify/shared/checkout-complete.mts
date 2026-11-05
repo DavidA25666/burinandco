@@ -42,7 +42,6 @@ export async function handleCompletedSession(origin: string, s: any) {
     const a = order.shipping?.address;
     await sendEmail({
       to: order.customer.email,
-      replyTo: Netlify.env.get("OWNER_EMAIL"),
       subject: "We've received your Burin & Co. commission",
       html: `<p>${esc(order.customer.name.split(" ")[0])},</p>
         <p>Thank you. We've received your photograph and started on the ${esc(styleInfo(order.style).name)} portrait of your ${categoryInfo(order.category).subject}.</p>

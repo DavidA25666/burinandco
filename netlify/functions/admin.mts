@@ -1,22 +1,10 @@
 import type { Config } from "@netlify/functions";
-import { getOrder, saveOrder, listOrders, log, type Order } from "../shared/store.mts";
-import { isAdmin, fileUrl, sign } from "../shared/sign.mts";
-import { triggerRender, triggerPrintFile } from "../shared/render-trigger.mts";
-import { sendEmail, button, esc } from "../shared/email.mts";
+import { getOrder, listOrders, type Order } from "../shared/store.mts";
+import { isAdmin, fileUrl } from "../shared/sign.mts";
 import { SIZES, FRAMES, styleInfo, categoryInfo } from "../shared/catalog.mts";
-import { cleanCaption } from "../shared/caption.mts";
-import { createFinerworksOrder, checkFinerworks, finerworksCode, codeEnvName, finerworksLive } from "../shared/finerworks.mts";
-
-// Why the current print file can't go to the lab as it is, or null if it can.
-function printFileProblem(o: Order) {
-  const n = o.renders.length;
-  if (!n) return "There's no rendering to print.";
-  if (o.printStatus === "preparing") return "The print file is still being made.";
-  if (!o.printFile) return `Make the print file from v${n} first.`;
-  if (o.printFile.version !== n) return `The print file is from v${o.printFile.version}, but the newest version is v${n}. Make the print file again.`;
-  if ((o.printFile.caption ?? null) !== (o.caption ?? "")) return "The caption changed (or wasn't recorded) since the print file was made. Make the print file again.";
-  return null;
-}
+import { checkFinerworks, finerworksCode, codeEnvName, finerworksLive } from "../shared/finerworks.mts";
+import { runOrderAction, printFileProblem, ActionError } from "../shared/order-actions.mts";
+import { audit } from "../shared/ops-store.mts";
 
 function view(o: Order, origin: string) {
   return {
@@ -38,6 +26,7 @@ function view(o: Order, origin: string) {
 
 const fail = (error: string, status = 409) => Response.json({ error }, { status });
 
+// The old password dashboard. Tenfold HQ runs the same actions through /api/ops (see ops.mts).
 export default async (req: Request) => {
   if (!isAdmin(req)) return fail("Wrong password.", 401);
   const origin = new URL(req.url).origin;
@@ -53,97 +42,15 @@ export default async (req: Request) => {
 
     const { action, id, note, force } = await req.json();
     if (action === "finerworks_check") return Response.json(await checkFinerworks());
+    // Refunds are HQ-only, so money only moves with HQ's confirmation and audit log.
+    if (action === "refund_order") return fail("Refund from Tenfold HQ.", 400);
     const order = await getOrder(id);
     if (!order) return fail("Order not found.", 404);
-
-    switch (action) {
-      case "regenerate": {
-        if (order.status === "rendering") return fail("This order is already rendering.");
-        if (order.status === "sent_to_print") return fail("This order has already gone to print.");
-        await triggerRender(origin, order.id, String(note ?? "").trim() || null);
-        return Response.json({ order: view({ ...order, status: "rendering" }, origin) });
-      }
-
-      case "send_proof": {
-        const version = order.renders.length;
-        if (!version) return fail("There's no rendering to send yet.");
-        const link = `${origin}/proof.html?o=${order.id}&t=${sign(`proof:${order.id}`)}`;
-        const first = esc(order.customer.name.split(" ")[0]);
-        const subject = categoryInfo(order.category).subject;
-        const sent = await sendEmail({
-          to: order.customer.email,
-          replyTo: Netlify.env.get("OWNER_EMAIL"),
-          subject: version > 1 ? "Your updated Burin & Co. proof" : "Your Burin & Co. proof is ready",
-          html: `<p>${first},</p><p>${version > 1 ? "We've updated your portrait based on your notes." : `The portrait of your ${subject} is ready for your review.`} Approve it and we'll print and frame it. If anything is off, tell us what to change.</p>${button(link, "Review your proof")}<p>${order.card ? `Your card is charged $${(order.price / 100).toFixed(2)} only when you approve. Changes cost nothing.` : "Nothing prints until you approve it."}</p><p>Burin &amp; Co.</p>`,
-        });
-        if (!sent) return fail("The email didn't send. Check RESEND_API_KEY and FROM_EMAIL in Netlify.", 502);
-        order.status = "proof_sent";
-        log(order, `Proof v${version} sent to customer`);
-        await saveOrder(order);
-        return Response.json({ order: view(order, origin) });
-      }
-
-      case "prepare_print": {
-        if (!order.renders.length) return fail("There's no rendering to print.");
-        if (order.printStatus === "preparing") return fail("The print file is already being made.");
-        if (order.status !== "customer_approved" && order.status !== "sent_to_print" && !force) return fail("The customer hasn't approved this proof yet.");
-        await triggerPrintFile(origin, order.id);
-        return Response.json({ order: view({ ...order, printStatus: "preparing" }, origin) });
-      }
-
-      // Places the order with FinerWorks through its API: a test order until FINERWORKS_LIVE is "true".
-      case "send_to_finerworks": {
-        if (order.status === "sent_to_print") return fail("This order has already gone to print.");
-        if (order.status !== "customer_approved" && !force) return fail("The customer hasn't approved this proof yet.");
-        // Never ship unpaid work. Card orders are charged when the customer approves.
-        if (!order.paidAt) return fail(order.status === "payment_due" ? "The customer approved, but their card was declined. Wait for them to pay on the payment page." : "This order isn't paid yet. The card is charged when the customer approves the proof.");
-        const problem = printFileProblem(order);
-        if (problem) return fail(problem);
-        const code = finerworksCode(order.size, order.frame);
-        if (!code) return fail(`No FinerWorks product code is set for ${SIZES[order.size].name} with a ${FRAMES[order.frame].toLowerCase()} frame. Add ${codeEnvName(order.size, order.frame) ?? "it"} in Netlify, or place this one by hand in FinerWorks and mark it sent.`);
-        const file = order.printFile!;
-        const title = `Burin & Co. ${styleInfo(order.style).name}, ${SIZES[order.size].name}`;
-        const result = await createFinerworksOrder(order, { url: fileUrl(origin, file.key), width: file.width, height: file.height }, code, title);
-        const ref = result.confirmationId ?? result.orderId ?? "(no number returned)";
-        order.finerworks = { ...result, productCode: code, printVersion: file.version };
-        order.printOrderRef = `FinerWorks${result.testMode ? " TEST" : ""} ${ref}`;
-        order.status = "sent_to_print";
-        log(order, result.testMode ? `FinerWorks TEST order ${ref} created from v${file.version} (not billed or printed)` : `FinerWorks order ${ref} placed from v${file.version}`);
-        await saveOrder(order);
-        return Response.json({ order: view(order, origin) });
-      }
-
-      // Placed by hand in FinerWorks (or another lab): record it here.
-      case "mark_sent_to_print": {
-        if (order.status === "sent_to_print") return fail("This order is already marked as sent to print.");
-        if (order.status !== "customer_approved" && !force) return fail("The customer hasn't approved this proof yet.");
-        if (!order.renders.length) return fail("There's no rendering to print.");
-        order.printOrderRef = String(note ?? "").trim().slice(0, 120) || undefined;
-        order.status = "sent_to_print";
-        log(order, `Sent to print${order.printOrderRef ? ` (${order.printOrderRef})` : ""}`);
-        await saveOrder(order);
-        return Response.json({ order: view(order, origin) });
-      }
-
-      case "set_caption": {
-        if (order.status === "sent_to_print") return fail("This order has already gone to print.");
-        const caption = cleanCaption(note);
-        if (caption === (order.caption ?? "")) return Response.json({ order: view(order, origin) });
-        if (caption) order.caption = caption; else delete order.caption;
-        log(order, caption ? `Caption set to "${caption}"` : "Caption removed");
-        await saveOrder(order);
-        return Response.json({ order: view(order, origin) });
-      }
-
-      case "archive": {
-        order.status = "archived";
-        log(order, "Archived");
-        await saveOrder(order);
-        return Response.json({ order: view(order, origin) });
-      }
-    }
-    return fail("Unknown action.", 400);
+    const result = await runOrderAction(origin, action, order, { note, force });
+    await audit("dashboard", `order:${action}`, { orderId: order.id, note: note ?? null, force: !!force });
+    return Response.json({ order: view(result.order, origin) });
   } catch (e) {
+    if (e instanceof ActionError) return fail(e.message, e.status);
     console.error(e);
     return fail(e instanceof Error ? e.message : "Something went wrong.", 500);
   }

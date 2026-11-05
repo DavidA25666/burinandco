@@ -3,7 +3,9 @@ import type { StyleId, CategoryId, SizeId, FrameId } from "./catalog.mts";
 
 export type OrderStatus =
   | "awaiting_card" | "card_saved" | "awaiting_payment" | "paid" | "rendering" | "render_failed" | "needs_review"
-  | "proof_sent" | "changes_requested" | "payment_due" | "customer_approved" | "sent_to_print" | "archived";
+  | "proof_sent" | "changes_requested" | "payment_due" | "customer_approved" | "sent_to_print" | "archived" | "refunded";
+
+export interface Utm { source: string | null; medium: string | null; campaign: string | null; content: string | null; referrer?: string | null; landedAt?: string | null }
 
 export interface Order {
   id: string;
@@ -43,6 +45,16 @@ export interface Order {
   printError?: string;
   lastError?: string;
   history: { at: string; event: string }[];
+  // Added for Tenfold HQ. All optional, so older orders still read.
+  livemode?: boolean;                 // false when the order was paid with Stripe test keys
+  utm?: { first: Utm | null; last: Utm | null } | null;
+  buyerGeo?: { city: string | null; region: string | null; country: string | null; lat: number | null; lng: number | null } | null;
+  stripeFeeCents?: number;            // the real fee from Stripe's balance transaction
+  chargeId?: string;
+  refundedCents?: number;
+  refundedAt?: string;
+  proofSentAt?: string;               // first proof sent
+  sentToPrintAt?: string;
 }
 
 // Production data goes to the global store. Previews share a separate "-preview" store, so

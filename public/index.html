@@ -44,8 +44,8 @@
           <button type="button" data-ba="jet" aria-pressed="false">Aircraft</button>
         </div>
         <div class="ba" id="heroBa" style="--cut:50%">
-          <img src="img/compare-photo.jpg" alt="The owner's photo: a silver Ford Mustang fastback with black stripes" width="1536" height="864">
-          <img class="after" src="img/compare-studio.jpg" alt="The finished Studio rendering of the same Mustang" width="1536" height="864">
+          <img fetchpriority="high" src="img/compare-photo.webp" srcset="img/compare-photo-768.webp 768w, img/compare-photo.webp 1536w" sizes="(max-width: 800px) 100vw, 1100px" alt="The owner's photo: a silver Ford Mustang fastback with black stripes" width="1536" height="864">
+          <img class="after" src="img/compare-studio.webp" srcset="img/compare-studio-768.webp 768w, img/compare-studio.webp 1536w" sizes="(max-width: 800px) 100vw, 1100px" alt="The finished Studio rendering of the same Mustang" width="1536" height="864">
           <span class="lab l">Your photo</span><span class="lab r">Studio rendering</span>
           <div class="bar"></div>
           <p class="drag-hint" aria-hidden="true">Drag to compare</p>
@@ -85,17 +85,17 @@
             <div class="styles">
               <label class="style">
                 <input type="radio" name="style" value="engraved" checked>
-                <img src="img/art-engraved.jpg" alt="Engraved: a black Corvette Sting Ray in fine black line engraving on cream paper" width="1400" height="560" loading="lazy">
+                <img src="img/art-engraved.webp" srcset="img/art-engraved-768.webp 768w, img/art-engraved.webp 1400w" sizes="(max-width: 800px) 100vw, 1100px" alt="Engraved: a black Corvette Sting Ray in fine black line engraving on cream paper" width="1400" height="560" loading="lazy">
                 <span><strong>Engraved</strong> Black ink on warm cotton rag. Classic, like a vintage patent plate.</span>
               </label>
               <label class="style">
                 <input type="radio" name="style" value="studio">
-                <img src="img/art-studio.jpg" alt="Studio: a silver Mustang fastback in a polished color rendering on white paper" width="1400" height="560" loading="lazy">
+                <img src="img/art-studio.webp" srcset="img/art-studio-768.webp 768w, img/art-studio.webp 1400w" sizes="(max-width: 800px) 100vw, 1100px" alt="Studio: a silver Mustang fastback in a polished color rendering on white paper" width="1400" height="560" loading="lazy">
                 <span><strong>Studio</strong> A designer's hand rendering in your car's true color, polished like a concept-car presentation.</span>
               </label>
               <label class="style">
                 <input type="radio" name="style" value="heritage">
-                <img src="img/art-heritage.jpg" alt="Heritage: a red Ferrari F40 painted in gouache on an ivory backdrop" width="1400" height="560" loading="lazy">
+                <img src="img/art-heritage.webp" srcset="img/art-heritage-768.webp 768w, img/art-heritage.webp 1400w" sizes="(max-width: 800px) 100vw, 1100px" alt="Heritage: a red Ferrari F40 painted in gouache on an ivory backdrop" width="1400" height="560" loading="lazy">
                 <span><strong>Heritage</strong> A gouache painting in the manner of classic mid-century automotive advertising art.</span>
               </label>
             </div>
@@ -164,9 +164,9 @@
         <p class="sub">Three styles, one rule: the subject is drawn exactly as it is. Engraved builds every tone from fine parallel lines, Studio is a designer's marker rendering in your exact paint, and Heritage is painted like mid-century advertising art.</p>
       </div>
       <div class="pair trio" tabindex="0" aria-label="Example plates, scroll sideways for more">
-        <figure><img src="img/framed-studio.jpg" alt="Framed Studio rendering of a silver Ford Mustang fastback in a black oak frame with a white mat" width="1120" height="1050" loading="lazy"><figcaption><span>Plate II</span>Ford Mustang Fastback, Studio, in black oak</figcaption></figure>
-        <figure><img src="img/framed-engraved.jpg" alt="Framed Engraved portrait of a Corvette Sting Ray in a dark walnut frame, captioned 1963 Corvette Sting Ray" width="1120" height="1050" loading="lazy"><figcaption><span>Plate III</span>Corvette Sting Ray, Engraved, in dark walnut with a caption</figcaption></figure>
-        <figure><img src="img/framed-heritage.jpg" alt="Framed Heritage painting of a red Ferrari F40 in a dark walnut frame" width="1120" height="1050" loading="lazy"><figcaption><span>Plate IV</span>Ferrari F40, Heritage, in dark walnut</figcaption></figure>
+        <figure><img src="img/framed-studio.webp" srcset="img/framed-studio-768.webp 768w, img/framed-studio.webp 1120w" sizes="(max-width: 800px) 100vw, 50vw" alt="Framed Studio rendering of a silver Ford Mustang fastback in a black oak frame with a white mat" width="1120" height="1050" loading="lazy"><figcaption><span>Plate II</span>Ford Mustang Fastback, Studio, in black oak</figcaption></figure>
+        <figure><img src="img/framed-engraved.webp" srcset="img/framed-engraved-768.webp 768w, img/framed-engraved.webp 1120w" sizes="(max-width: 800px) 100vw, 50vw" alt="Framed Engraved portrait of a Corvette Sting Ray in a dark walnut frame, captioned 1963 Corvette Sting Ray" width="1120" height="1050" loading="lazy"><figcaption><span>Plate III</span>Corvette Sting Ray, Engraved, in dark walnut with a caption</figcaption></figure>
+        <figure><img src="img/framed-heritage.webp" srcset="img/framed-heritage-768.webp 768w, img/framed-heritage.webp 1120w" sizes="(max-width: 800px) 100vw, 50vw" alt="Framed Heritage painting of a red Ferrari F40 in a dark walnut frame" width="1120" height="1050" loading="lazy"><figcaption><span>Plate IV</span>Ferrari F40, Heritage, in dark walnut</figcaption></figure>
       </div>
     </div>
   </section>

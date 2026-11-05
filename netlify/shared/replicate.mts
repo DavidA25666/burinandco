@@ -1,4 +1,8 @@
 // Runs the illustration model on Replicate. Change REPLICATE_MODEL to try another model.
+// Every run is logged with its estimated cost to the AI ledger that Tenfold HQ reads.
+import { recordAiCall, type AiPurpose } from "./ops-store.mts";
+
+export interface AiMeta { purpose: AiPurpose; orderId: string | null }
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // GPT Image only takes fixed sizes. Use its largest (16:9 or 9:16); the print step pads it to the frame shape.
@@ -24,19 +28,19 @@ function inputFor(model: string, imageUrl: string, prompt: string, aspect: strin
   return { prompt, image: imageUrl };
 }
 
-export async function renderIllustration(imageUrl: string, prompt: string, aspect: string, modelOverride?: string): Promise<string> {
+export async function renderIllustration(imageUrl: string, prompt: string, aspect: string, modelOverride: string | undefined, meta: AiMeta): Promise<string> {
   const model = modelOverride || Netlify.env.get("REPLICATE_MODEL") || "openai/gpt-image-2.5-sunburst";
-  return runModel(model, inputFor(model, imageUrl, prompt, aspect));
+  return runModel(model, inputFor(model, imageUrl, prompt, aspect), meta);
 }
 
 // Upscales a finished render for print. Topaz offers 2x or 4x; 2x of a 3840px render is 7680px.
-export async function upscaleForPrint(imageUrl: string): Promise<string> {
+export async function upscaleForPrint(imageUrl: string, orderId: string): Promise<string> {
   return runModel("topazlabs/image-upscale", {
     image: imageUrl, upscale_factor: "2x", enhance_model: "High Fidelity V2", output_format: "png",
-  });
+  }, { purpose: "upscale", orderId });
 }
 
-async function runModel(model: string, input: Record<string, unknown>): Promise<string> {
+async function runModel(model: string, input: Record<string, unknown>, meta: AiMeta): Promise<string> {
   const token = Netlify.env.get("REPLICATE_API_TOKEN");
   if (!token) throw new Error("REPLICATE_API_TOKEN is not set");
   const auth = { Authorization: `Bearer ${token}` };
@@ -63,6 +67,9 @@ async function runModel(model: string, input: Record<string, unknown>): Promise<
     await sleep(4000);
     pred = await (await fetch(pred.urls.get, { headers: auth })).json();
   }
+  // Log the run. Failed runs are logged at $0 (Replicate bills these models per finished image).
+  await recordAiCall({ model, purpose: meta.purpose, orderId: meta.orderId, seconds: pred.metrics?.predict_time ?? null, ok: pred.status === "succeeded", ...(pred.status === "succeeded" ? {} : { cents: 0 }) })
+    .catch((e) => console.error("AI ledger write failed", e));
   if (pred.status !== "succeeded") throw new Error(pred.error ?? `Replicate run ${pred.status}`);
   const out = Array.isArray(pred.output) ? pred.output[0] : pred.output;
   if (typeof out !== "string") throw new Error("The model returned no image.");

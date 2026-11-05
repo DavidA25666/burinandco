@@ -18,7 +18,8 @@ export default async (req: Request) => {
 
   try {
     const prompt = buildPrompt(order.style, order.category, order.notes, adjustment);
-    const outputUrl = await renderIllustration(fileUrl(origin, order.photoKey), prompt, aspectFor(order.size, order.category));
+    const outputUrl = await renderIllustration(fileUrl(origin, order.photoKey), prompt, aspectFor(order.size, order.category), undefined,
+      { purpose: adjustment || order.renders.length ? "regeneration" : "order", orderId: order.id });
 
     // Replicate's links expire, so keep our own copy.
     const img = await fetch(outputUrl);

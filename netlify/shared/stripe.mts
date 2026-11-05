@@ -90,3 +90,41 @@ export function verifyStripeSignature(payload: string, header: string | null, se
   const expected = Buffer.from(createHmac("sha256", secret).update(`${t}.${payload}`).digest("hex"));
   return sigs.some((s) => s.length === expected.length && timingSafeEqual(Buffer.from(s), expected));
 }
+
+// ---------- Added for Tenfold HQ ----------
+
+/** True when the site runs on Stripe test keys (Deploy Previews), so its orders are test orders. */
+export function stripeTestMode() {
+  const key = Netlify.env.get("STRIPE_SECRET_KEY") ?? "";
+  return /^(sk|rk)_test_/.test(key);
+}
+
+export function refundPayment(opts: { paymentIntent: string; amount?: number; reason?: string; orderId: string; requestId: string }) {
+  return stripe<{ id: string; status: string; amount: number }>("refunds", {
+    payment_intent: opts.paymentIntent,
+    ...(opts.amount ? { amount: String(opts.amount) } : {}),
+    reason: "requested_by_customer",
+    "metadata[orderId]": opts.orderId,
+    ...(opts.reason ? { "metadata[note]": opts.reason.slice(0, 400) } : {}),
+  }, { idempotencyKey: `refund-${opts.orderId}-${opts.requestId}` });
+}
+
+export function getBalanceTransaction(id: string) {
+  return stripe<{ fee: number; net: number; amount: number }>(`balance_transactions/${encodeURIComponent(id)}`);
+}
+
+export function getBalance() {
+  return stripe<{ available: { amount: number; currency: string }[]; pending: { amount: number; currency: string }[]; livemode: boolean }>("balance");
+}
+
+export function listPayouts(limit = 20) {
+  return stripe<{ data: { id: string; amount: number; arrival_date: number; status: string; created: number }[] }>(`payouts?limit=${limit}`);
+}
+
+export function listStripeDisputes(limit = 50) {
+  return stripe<{ data: { id: string; amount: number; status: string; reason: string; created: number; charge: string }[] }>(`disputes?limit=${limit}`);
+}
+
+export function getAccountMode() {
+  return stripe<{ id: string; charges_enabled: boolean; payouts_enabled: boolean }>("account").catch(() => null);
+}
