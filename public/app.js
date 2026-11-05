@@ -37,8 +37,8 @@
   document.querySelectorAll("[data-ba]").forEach((btn) => btn.addEventListener("click", () => {
     const ex = examples[btn.dataset.ba];
     const [photo, art] = heroBa.querySelectorAll("img");
-    photo.src = `img/${ex.src}-photo.jpg`; photo.alt = `The owner's photo: ${ex.what}`;
-    art.src = `img/${ex.src}-studio.jpg`; art.alt = `The finished Studio rendering of ${ex.what}`;
+    photo.srcset = `img/${ex.src}-photo-768.webp 768w, img/${ex.src}-photo.webp ${ex.w}w`; photo.src = `img/${ex.src}-photo.webp`; photo.alt = `The owner's photo: ${ex.what}`;
+    art.srcset = `img/${ex.src}-studio-768.webp 768w, img/${ex.src}-studio.webp ${ex.w}w`; art.src = `img/${ex.src}-studio.webp`; art.alt = `The finished Studio rendering of ${ex.what}`;
     for (const img of [photo, art]) { img.width = ex.w; img.height = ex.h; }
     heroBa.style.setProperty("--ar", `${ex.w} / ${ex.h}`);
     heroBa.style.setProperty("--cut", "50%");
@@ -91,7 +91,10 @@
     btn.disabled = true;
     btn.textContent = "Opening secure card page…";
     try {
-      const res = await fetch("/api/orders", { method: "POST", body: new FormData(form) });
+      const body = new FormData(form);
+      body.set("utm_first", localStorage.getItem("bc_utm_first") || "");
+      body.set("utm_last", localStorage.getItem("bc_utm_last") || "");
+      const res = await fetch("/api/orders", { method: "POST", body });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.checkoutUrl) throw new Error(data.error || "Checkout couldn't start. Try again in a moment.");
       location.href = data.checkoutUrl;
@@ -103,4 +106,46 @@
   });
 
   update();
+
+  // Live prices, headline and maintenance mode, all set from Tenfold HQ.
+  fetch("/api/catalog").then((r) => r.ok ? r.json() : null).then((c) => {
+    if (!c) return;
+    for (const sz of c.sizes || []) {
+      const input = form.querySelector(`input[name="size"][value="${sz.id}"]`);
+      if (!input) continue;
+      input.dataset.price = String(sz.price / 100);
+      const pr = input.closest("label").querySelector(".pr");
+      if (pr) pr.textContent = money(sz.price / 100);
+    }
+    const lowest = Math.min(...(c.sizes || []).map((s) => s.price));
+    const from = document.querySelector(".hero-actions .price");
+    if (from && Number.isFinite(lowest)) from.textContent = "From " + money(lowest / 100);
+    if (c.headline) { const h1 = document.querySelector("h1"); if (h1) h1.textContent = c.headline; }
+    if (c.maintenance) {
+      const btn = $("pay");
+      btn.disabled = true;
+      btn.textContent = "Commissions are paused for a short while";
+    }
+    update();
+  }).catch(() => {});
+})();
+
+// Visit counter and ad attribution: keeps the first landing's UTMs for 30 days, and the latest ones.
+(function () {
+  try {
+    const q = new URLSearchParams(location.search);
+    const pick = (k) => q.get("utm_" + k) || null;
+    const ref = document.referrer && !document.referrer.includes(location.host) ? new URL(document.referrer).hostname : null;
+    const utm = { source: pick("source") || (q.get("fbclid") ? "facebook" : q.get("gclid") ? "google" : null), medium: pick("medium"), campaign: pick("campaign"), content: pick("content"), referrer: ref, landedAt: new Date().toISOString() };
+    const has = utm.source || utm.campaign || utm.referrer;
+    const first = JSON.parse(localStorage.getItem("bc_utm_first") || "null");
+    if (has && (!first || Date.now() - Date.parse(first.landedAt) > 30 * 864e5)) localStorage.setItem("bc_utm_first", JSON.stringify(utm));
+    if (has) localStorage.setItem("bc_utm_last", JSON.stringify(utm));
+    let sid = sessionStorage.getItem("bc_sid");
+    if (!sid) { sid = Math.random().toString(36).slice(2, 12); sessionStorage.setItem("bc_sid", sid); }
+    const source = utm.source ? utm.source + (utm.medium ? " / " + utm.medium : "") : ref || "direct";
+    const data = JSON.stringify({ sid, source, path: location.pathname });
+    if (navigator.sendBeacon) navigator.sendBeacon("/api/t", new Blob([data], { type: "application/json" }));
+    else fetch("/api/t", { method: "POST", body: data, keepalive: true });
+  } catch (e) { /* counting a visit must never break the page */ }
 })();

@@ -30,7 +30,7 @@ async function edgeFill(img: Uint8Array, w: number, h: number, side: "top" | "bo
   const mirrored = await (vertical ? sharp(strip).flip() : sharp(strip).flop()).png().toBuffer();
   const pw = vertical ? w : size, ph = vertical ? size : h;
   // Tiles alternate mirrored/plain, starting with a mirrored one against the image.
-  const tiles: { input: Uint8Array; left: number; top: number }[] = [];
+  const tiles: { input: Buffer; left: number; top: number }[] = [];
   for (let k = 0, at = 0; at < size; k++, at += band) {
     const input = k % 2 === 0 ? mirrored : strip;
     const nearImage = side === "top" || side === "left";
@@ -45,10 +45,10 @@ async function edgeFill(img: Uint8Array, w: number, h: number, side: "top" | "bo
 async function pad(img: Uint8Array, w: number, h: number, vertical: boolean, before: number, after: number) {
   if (before <= 0 && after <= 0) return img;
   const W = vertical ? w : w + before + after, H = vertical ? h + before + after : h;
-  const layers: { input: Uint8Array; left: number; top: number }[] = [];
+  const layers: { input: Buffer; left: number; top: number }[] = [];
   if (before > 0) layers.push({ input: await edgeFill(img, w, h, vertical ? "top" : "left", before), left: 0, top: 0 });
   if (after > 0) layers.push({ input: await edgeFill(img, w, h, vertical ? "bottom" : "right", after), left: vertical ? 0 : before + w, top: vertical ? before + h : 0 });
-  layers.push({ input: img, left: vertical ? 0 : before, top: vertical ? before : 0 });
+  layers.push({ input: Buffer.from(img), left: vertical ? 0 : before, top: vertical ? before : 0 });
   return sharp({ create: { width: W, height: H, channels: 3, background: "#ffffff" } }).composite(layers).png().toBuffer();
 }
 

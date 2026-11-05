@@ -44,7 +44,7 @@ Set these in Netlify: **Project configuration → Environment variables**. Never
 |---|---|
 | `SITE_SECRET` | Any long random string (40+ characters), different from Namesake's. Signs proof links and file links. |
 | `ADMIN_PASSWORD` | The password for `/admin.html` and `/lab.html`. |
-| `OWNER_EMAIL` | Where your "ready to review" notifications go. |
+| `OWNER_EMAIL` | Where owner notifications go, only if they're turned back on in HQ (off by default). |
 | `FROM_EMAIL` | e.g. `Burin & Co. <studio@burinandco.com>` (must be a Resend-verified domain). |
 | `RESEND_API_KEY` | From Resend. |
 | `STRIPE_SECRET_KEY` | Start with your `sk_test_...` key. |
@@ -56,6 +56,11 @@ Set these in Netlify: **Project configuration → Environment variables**. Never
 | `FINERWORKS_APP_KEY` | From FinerWorks. |
 | `FINERWORKS_CODE_...` | Optional. The four product codes are built in (`netlify/shared/finerworks.mts`); a variable such as `FINERWORKS_CODE_16X12_WALNUT` overrides one. |
 | `FINERWORKS_LIVE` | Leave unset for test orders (not billed or printed). Set to `true` to place real orders. FinerWorks also keeps orders in test mode while the app key itself is in test mode. |
+| `PORTFOLIO_OPS_SECRET` | The Admin Plug secret Tenfold HQ generates (site → Settings → Admin plug). |
+| `RESEND_INBOUND_WEBHOOK_SECRET` | Signing secret of the Resend webhook for `email.received` (`whsec_...`). |
+| `RESEND_RECEIVING_API_KEY` | Resend key that can read received emails (falls back to `RESEND_API_KEY`). |
+| `SUPPORT_EMAIL` | Optional. Default `support@burinandco.com`. |
+| `HQ_SITE_SLUG` | Optional. Default `burinandco` (the slug HQ shows for the site). |
 
 ## FinerWorks setup
 
@@ -74,9 +79,31 @@ The variable names follow the print size the site shows, so a size added to `cat
 
 Stripe Dashboard → Developers → Webhooks → Add endpoint:
 
-- URL: `https://YOUR-SITE.netlify.app/api/stripe-webhook`
-- Event: `checkout.session.completed`
+- URL: `https://burinandco.com/api/stripe/webhook` (the old `/api/stripe-webhook` path still works)
+- Events: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `payment_intent.succeeded`,
+  `payment_intent.payment_failed`, `charge.succeeded`, `charge.updated`, `charge.refunded`,
+  `charge.dispute.created`, `charge.dispute.closed`
 - Copy the signing secret into `STRIPE_WEBHOOK_SECRET`.
+
+## Tenfold HQ (the owners' dashboard)
+
+Burin & Co. is run from Tenfold HQ (hq.tenfoldcommerce.com) through the signed Admin Plug in
+`docs/SITE_CONTRACT.md`. Everything lives in `netlify/functions/ops.mts` and `netlify/shared/ops/`.
+
+- Every `/api/ops/*` request is checked with `PORTFOLIO_OPS_SECRET` (HMAC-SHA256, 5-minute window).
+- HQ reads health, metrics (with geo, cohorts, channels, cash, fulfillment, mix, SEO), orders, alerts,
+  ads attribution, the support inbox, live visitors, monthly reports, pricing and vendors.
+- HQ runs the store admin: orders (send proof, regenerate, caption, print file, FinerWorks, refund),
+  settings, AI spend, FinerWorks checks, the email outbox and the change log. Every change is logged.
+- Prices: the defaults are in `catalog.mts`; HQ's prices and seasonal prices override them and are refused
+  below break-even (FinerWorks cost + AI + Stripe fees). The storefront reads them from `/api/catalog`.
+- Owner emails are off by default; HQ alerts replace them. Turn them back on in HQ → Admin → Store settings.
+- AI: every Replicate run is logged with its estimated cost. The model lab (`/lab.html`) is off until it's
+  switched on in HQ, and there's a monthly AI budget (alert at 75%). No AI runs on a schedule.
+- Support mail: customer emails reply to `support@burinandco.com`. Resend receives it and posts to
+  `/api/inbound/email`; mail for the other Tenfold brands is ignored.
+
+Run `npm test` and `npm run typecheck` before pushing.
 
 ## Prices, styles and prompts
 

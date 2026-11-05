@@ -21,7 +21,7 @@ export default async (req: Request) => {
   await saveOrder(order);
 
   try {
-    const upscaledUrl = await upscaleForPrint(fileUrl(origin, order.renders[version - 1].key));
+    const upscaledUrl = await upscaleForPrint(fileUrl(origin, order.renders[version - 1].key), order.id);
     const img = await fetch(upscaledUrl);
     if (!img.ok) throw new Error("Couldn't download the upscaled image.");
     const { width, height, dpi } = printPixels(order.size, order.category);

@@ -17,7 +17,7 @@ export default async (req: Request) => {
   try {
     const prompt = buildPrompt(test.style, test.category, null, null);
     const origin = new URL(req.url).origin;
-    const outputUrl = await renderIllustration(fileUrl(origin, test.photoKey), prompt, aspectFor(test.size, test.category), model);
+    const outputUrl = await renderIllustration(fileUrl(origin, test.photoKey), prompt, aspectFor(test.size, test.category), model, { purpose: "lab", orderId: null });
     const img = await fetch(outputUrl);
     if (!img.ok) throw new Error("Couldn't download the finished image.");
     const key = `lab/${testId}/${model.replace("/", "--")}`;

@@ -1,14 +1,31 @@
-import type { Config } from "@netlify/functions";
+import type { Config, Context } from "@netlify/functions";
 import { STYLES, SIZES, FRAMES, CATEGORIES, type StyleId, type SizeId, type FrameId, type CategoryId, productName } from "../shared/catalog.mts";
-import { filesStore, saveOrder, type Order } from "../shared/store.mts";
-import { createCardSetup } from "../shared/stripe.mts";
+import { filesStore, saveOrder, type Order, type Utm } from "../shared/store.mts";
+import { createCardSetup, stripeTestMode } from "../shared/stripe.mts";
+import { getSettings } from "../shared/ops-store.mts";
+import { priceCents } from "../shared/pricing.mts";
+
+// UTM parameters the storefront kept from the visitor's landing (first and latest), for HQ's ads reports.
+function readUtm(raw: FormDataEntryValue | null): Utm | null {
+  try {
+    const u = JSON.parse(String(raw ?? ""));
+    if (!u || typeof u !== "object") return null;
+    const f = (k: string) => (typeof u[k] === "string" && u[k] ? u[k].trim().slice(0, 120) : null);
+    const utm: Utm = { source: f("source")?.toLowerCase() ?? null, medium: f("medium"), campaign: f("campaign"), content: f("content"), referrer: f("referrer"), landedAt: f("landedAt") };
+    return utm.source || utm.referrer || utm.campaign ? utm : null;
+  } catch {
+    return null;
+  }
+}
 import { cleanCaption } from "../shared/caption.mts";
 
 const bad = (error: string, status = 400) => Response.json({ error }, { status });
 
-export default async (req: Request) => {
+export default async (req: Request, context: Context) => {
   if (req.method !== "POST") return bad("Method not allowed", 405);
   try {
+    const settings = await getSettings();
+    if (settings.maintenance) return bad("We're not taking new commissions for a short while. Please try again soon.", 503);
     const form = await req.formData();
     const photo = form.get("photo");
     const name = String(form.get("name") ?? "").trim().slice(0, 120);
@@ -43,8 +60,17 @@ export default async (req: Request) => {
     const order: Order = {
       id, createdAt: new Date().toISOString(), status: "awaiting_card",
       customer: { name, email }, category, style, size, frame, collector: false, shipping,
-      price: SIZES[size].price, notes, plaque: ["", ""], ...(caption ? { caption } : {}),
+      price: priceCents(size, settings), notes, plaque: ["", ""], ...(caption ? { caption } : {}),
       photoKey, renders: [], changeRequests: [], history: [{ at: new Date().toISOString(), event: "Order started" }],
+      livemode: !stripeTestMode(),
+      utm: { first: readUtm(form.get("utm_first")), last: readUtm(form.get("utm_last")) },
+      buyerGeo: context?.geo ? {
+        city: context.geo.city ?? null,
+        region: context.geo.subdivision?.code ?? null,
+        country: context.geo.country?.code ?? null,
+        lat: typeof context.geo.latitude === "number" ? Math.round(context.geo.latitude * 100) / 100 : null,
+        lng: typeof context.geo.longitude === "number" ? Math.round(context.geo.longitude * 100) / 100 : null,
+      } : null,
     };
 
     const origin = new URL(req.url).origin;
