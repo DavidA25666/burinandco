@@ -191,3 +191,21 @@ describe("admin: new actions and the cost-of-goods section", () => {
     expect(body.jobs[0]).toMatchObject({ id: "finerworks-sync", schedule: "Every 6 hours" });
   });
 });
+
+describe("owner test emails from Netlify", () => {
+  it("treats orders from OWNER_TEST_EMAILS as test, so metrics leave them out", async () => {
+    env.set("OWNER_TEST_EMAILS", " David@Example.com , other@example.com");
+    const o = order({ customer: { ...order().customer, email: "david@example.com" }, paidAt: hoursAgo(5) });
+    expect(isTest(o, S)).toBe(true);
+    expect(isTest(order({ paidAt: hoursAgo(5) }), S)).toBe(false);
+    useSecret();
+    seed(o);
+    const now = new Date().toISOString().slice(0, 10);
+    const m = await (await handler(signed("GET", `/api/ops/metrics?from=${now.slice(0, 8)}01&to=${now}`))).json();
+    const revenue = (m.daily as any[]).reduce((t, d) => t + (d.revenue ?? 0), 0);
+    expect(revenue).toBe(0);
+    seed(order({ paidAt: hoursAgo(5) }));
+    const m2 = await (await handler(signed("GET", `/api/ops/metrics?from=${now.slice(0, 8)}01&to=${now}`))).json();
+    expect((m2.daily as any[]).reduce((t, d) => t + (d.revenue ?? 0), 0)).toBeGreaterThan(0);
+  });
+});

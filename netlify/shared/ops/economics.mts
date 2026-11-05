@@ -12,11 +12,17 @@ export const ORDER_AI: AiCall["purpose"][] = ["order", "regeneration", "upscale"
  * Test orders, left out of every number HQ shows: "Mark as test" in HQ (either way) wins; then
  * Stripe test keys, the owners' own emails, and any order refunded in full within 24 hours of payment.
  */
+/** Owner/test emails from HQ's store setting plus OWNER_TEST_EMAILS (comma list) in Netlify. */
+export function ownerTestEmails(s: Settings) {
+  const env = Netlify.env.get("OWNER_TEST_EMAILS") ?? "";
+  return [...s.ownerTestEmails, ...String(env).split(",")].map((e) => e.trim().toLowerCase()).filter(Boolean);
+}
+
 export function isTest(o: Order, s: Settings) {
   if (o.testOverride != null) return o.testOverride;
   if (o.livemode === false) return true;
-  const email = o.customer.email.toLowerCase();
-  if (s.ownerTestEmails.some((e) => e.toLowerCase() === email)) return true;
+  const email = o.customer.email.trim().toLowerCase();
+  if (ownerTestEmails(s).includes(email)) return true;
   return refundedWithinADay(o);
 }
 
