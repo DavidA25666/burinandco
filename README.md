@@ -59,7 +59,7 @@ Set these in Netlify: **Project configuration → Environment variables**. Never
 | `PORTFOLIO_OPS_SECRET` | The Admin Plug secret Tenfold HQ generates (site → Settings → Admin plug). |
 | `RESEND_INBOUND_WEBHOOK_SECRET` | Signing secret of the Resend webhook for `email.received` (`whsec_...`). |
 | `META_PIXEL_ID` | Burin's Meta Pixel ID (Events Manager). Public; loads only after a visitor accepts cookies. |
-| `META_CAPI_TOKEN` | Conversions API access token for that Pixel (Events Manager → Settings → Generate access token). Server-only. |
+| `META_CAPI_ACCESS_TOKEN` | Conversions API access token (the older name `META_CAPI_TOKEN` also works; same name as Namesake) for that Pixel (Events Manager → Settings → Generate access token). Server-only. |
 | `META_TEST_EVENT_CODE` | Optional, temporary: sends CAPI events to Events Manager → Test events while you check them. Remove after. |
 | `CLARITY_PROJECT_ID` | Microsoft Clarity project ID (Settings → Overview). Public; loads only after Accept. |
 | `RESEND_RECEIVING_API_KEY` | Resend key that can read received emails (falls back to `RESEND_API_KEY`). |

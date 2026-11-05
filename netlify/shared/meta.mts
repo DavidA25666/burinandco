@@ -1,7 +1,7 @@
 // Meta Conversions API (CAPI): the server-side copy of the Pixel's Purchase event, so Meta still
 // counts the sale when the browser blocks the Pixel. Sent only for orders whose buyer accepted
 // cookies, with the same event_id as the browser event so Meta counts it once.
-// Needs META_PIXEL_ID and META_CAPI_TOKEN in Netlify; without them it does nothing.
+// Needs META_PIXEL_ID and META_CAPI_ACCESS_TOKEN (META_CAPI_TOKEN also accepted) in Netlify; without them it does nothing.
 // META_TEST_EVENT_CODE (optional) sends events to Events Manager → Test events instead.
 import { createHash } from "node:crypto";
 import type { Order } from "./store.mts";
@@ -55,7 +55,7 @@ export function purchaseEvent(o: Order, nowMs = Date.now()) {
 /** Sends the Purchase event once. Never throws: a Meta outage must not break an approval. */
 export async function sendPurchase(o: Order): Promise<"sent" | "skipped" | "failed"> {
   const pixel = Netlify.env.get("META_PIXEL_ID")?.trim();
-  const token = Netlify.env.get("META_CAPI_TOKEN")?.trim();
+  const token = (Netlify.env.get("META_CAPI_ACCESS_TOKEN") ?? Netlify.env.get("META_CAPI_TOKEN"))?.trim();
   if (!pixel || !token || !o.ads?.consent || o.livemode === false || o.ads.purchaseSentAt) return "skipped";
   try {
     const test = Netlify.env.get("META_TEST_EVENT_CODE")?.trim();

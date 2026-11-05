@@ -131,7 +131,7 @@ describe("Meta Conversions API", () => {
     expect((ev.user_data.em as string[])[0]).toMatch(/^[0-9a-f]{64}$/);
 
     env.set("META_PIXEL_ID", "123");
-    env.set("META_CAPI_TOKEN", "tok");
+    env.set("META_CAPI_ACCESS_TOKEN", "tok");
     const fetchMock = vi.fn(async () => new Response("{}", { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
     expect(await sendPurchase(o)).toBe("sent");
