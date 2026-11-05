@@ -41,7 +41,6 @@
   <div id="app" hidden>
     <form class="panel" id="new">
       <h2 style="font-size:1.6rem">Test a photo</h2>
-      <p class="form-error" id="lab-off" role="status" hidden></p>
       <p class="hint">Each photo is rendered by every model with the same prompt real orders use, so each test uses Replicate credit for every model.</p>
       <div class="new">
         <label><span class="label">Photo</span><input type="file" name="photo" accept="image/jpeg,image/png,image/webp" required></label>
@@ -84,9 +83,7 @@
   function showGate(msg) { $("#app").hidden = true; $("#gate").hidden = false; $("#gate-err").textContent = msg || ""; $("#pw").focus(); }
 
   async function load() {
-    const data = await api("GET");
-    tests = data.tests;
-    $("#lab-off").hidden = !data.blocked; $("#lab-off").textContent = data.blocked || "";
+    ({ tests } = await api("GET"));
     $("#gate").hidden = true; $("#app").hidden = false;
     render();
     clearTimeout(timer);

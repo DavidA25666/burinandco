@@ -39,7 +39,7 @@ export interface Settings {
   maintenanceReason: string | null;
   headline: string | null;           // null = the headline written in index.html
   ownerEmails: boolean;              // owner notification emails (off: HQ action items instead)
-  labEnabled: boolean;               // the model-compare page spends AI money: off until switched on in HQ
+  labEnabled: boolean;               // no longer used: the model lab is always on (kept so old saved settings still parse)
   aiMonthlyCapCents: number;         // monthly AI budget; alert at 75%, lab blocked at 100%
   aiCapBlocksOrders: boolean;        // at the cap, also block regenerations and print upscales
   autoReply: boolean;                // reserved for inbox auto replies (none are sent today)
