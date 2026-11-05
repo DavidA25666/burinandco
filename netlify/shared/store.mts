@@ -55,6 +55,8 @@ export interface Order {
   refundedAt?: string;
   proofSentAt?: string;               // first proof sent
   sentToPrintAt?: string;
+  // Meta ads: the buyer's cookie choice at checkout, and what CAPI needs (only kept with consent).
+  ads?: { consent: boolean; fbp?: string | null; fbc?: string | null; ip?: string | null; ua?: string | null; url?: string | null; purchaseSentAt?: string } | null;
 }
 
 // Production data goes to the global store. Previews share a separate "-preview" store, so

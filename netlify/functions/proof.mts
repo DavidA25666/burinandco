@@ -4,6 +4,7 @@ import { verify } from "../shared/sign.mts";
 import { chargeSavedCard, createPaymentCheckout, StripeError } from "../shared/stripe.mts";
 import { notifyOwner, button, esc } from "../shared/email.mts";
 import { SIZES, FRAMES, styleInfo, categoryInfo, productName } from "../shared/catalog.mts";
+import { sendPurchase, purchaseEventId } from "../shared/meta.mts";
 
 export default async (req: Request) => {
   const url = new URL(req.url);
@@ -33,6 +34,8 @@ export default async (req: Request) => {
       prepaid: !order.card,
       awaitingResponse: order.status === "proof_sent" || order.status === "payment_due",
       paymentDue: order.status === "payment_due",
+      // For the browser Pixel's Purchase event (deduplicated with the server's CAPI event by id).
+      purchase: order.paidAt && order.card ? { eventId: purchaseEventId(order), value: order.price / 100, currency: "USD", size: order.size } : null,
     });
   }
 
@@ -78,12 +81,13 @@ export default async (req: Request) => {
     }
 
     order.status = "customer_approved";
+    if (order.paidAt) await sendPurchase(order);
     await saveOrder(order);
     await notifyOwner(
       `Approved: ${order.customer.name}'s portrait is ready to print`,
       `<p>${esc(order.customer.name)} approved version ${v}${order.card ? ` and their card was charged ${amount}` : ""}. Make the print file and send it to FinerWorks from your dashboard.</p>${admin}`,
     );
-    return Response.json({ status: order.status });
+    return Response.json({ status: order.status, purchase: order.paidAt && order.card ? { eventId: purchaseEventId(order), value: order.price / 100, currency: "USD", size: order.size } : null });
   }
 
   if (body.action === "changes") {

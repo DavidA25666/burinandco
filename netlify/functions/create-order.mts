@@ -18,6 +18,7 @@ function readUtm(raw: FormDataEntryValue | null): Utm | null {
   }
 }
 import { cleanCaption } from "../shared/caption.mts";
+import { adContext } from "../shared/meta.mts";
 
 const bad = (error: string, status = 400) => Response.json({ error }, { status });
 
@@ -63,6 +64,7 @@ export default async (req: Request, context: Context) => {
       price: priceCents(size, settings), notes, plaque: ["", ""], ...(caption ? { caption } : {}),
       photoKey, renders: [], changeRequests: [], history: [{ at: new Date().toISOString(), event: "Order started" }],
       livemode: !stripeTestMode(),
+      ads: adContext(req, form),
       utm: { first: readUtm(form.get("utm_first")), last: readUtm(form.get("utm_last")) },
       buyerGeo: context?.geo ? {
         city: context.geo.city ?? null,
