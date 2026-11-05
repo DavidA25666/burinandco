@@ -8,6 +8,7 @@ import {
   listOutbox, removeOutbox, saveOutbox, rememberedResult, rememberResult, listAudit, nyDate, addDays, audit, cached, type Settings,
 } from "../shared/ops-store.mts";
 import { buildMetrics } from "../shared/ops/metrics.mts";
+import { searchConsoleBlock } from "../shared/search-console.mts";
 import { buildHealth, buildCash } from "../shared/ops/health.mts";
 import { ordersView, buildAlerts, attributionView, liveView, reportView, orderIssue, orderActions, fulfillmentInfo } from "../shared/ops/views.mts";
 import { vendorsView } from "../shared/ops/vendors.mts";
@@ -41,6 +42,7 @@ async function metrics(q: URLSearchParams) {
   const { from, to } = range(q);
   const [orders, settings, aiCalls, visits] = await Promise.all([listOrders(), getSettings(), listAiCalls(), listVisits(from, to)]);
   const out = buildMetrics({ site: SITE, orders, aiCalls, visits, settings, from, to, fixedCosts: [] });
+  out.seo = { ...(out.seo as object), search_console: await searchConsoleBlock(from, to) };
   out.cash = await buildCash(orders).catch((e) => ({ configured: true, status: "error", missing_permissions: [], errors: { all: String(e) } }));
   return out;
 }

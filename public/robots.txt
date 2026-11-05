@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /admin.html
+Disallow: /lab.html
+Disallow: /proof.html
+Disallow: /thanks.html
+Disallow: /api/
+
+Sitemap: https://burinandco.com/sitemap.xml

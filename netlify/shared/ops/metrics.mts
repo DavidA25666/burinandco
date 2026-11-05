@@ -151,7 +151,7 @@ export function buildMetrics(i: MetricsInput) {
     attribution: buildChannels(paidAll, byEmail, i, money),
     fulfillment: buildFulfillment(real, i.from, i.to, today),
     mix: buildMix(paidInRange, ai, i.settings),
-    seo: { search_console: { configured: false, message: "Search Console isn't connected to the store yet. Add burinandco.com in Search Console and connect it in HQ." } },
+    seo: { search_console: { configured: false, message: "Search Console isn't connected to the store yet. Set GOOGLE_SERVICE_ACCOUNT_JSON and GSC_PROPERTY in Netlify." } },
   };
   return out;
 }
