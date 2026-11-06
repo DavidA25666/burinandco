@@ -66,6 +66,38 @@ describe("inbound email", () => {
     expect(box.drafts[0].message_id).toMatch(/^d_/);
   });
 
+  it("forwards a copy to FORWARD_INBOUND_TO, once, with Reply-To the customer, and still files it", async () => {
+    env.set("FORWARD_INBOUND_TO", "david@tenfoldcommerce.com");
+    env.set("RESEND_API_KEY", "re_test");
+    const sends: any[] = [];
+    vi.mocked(fetch).mockImplementation(async (url: any, init?: any) => {
+      const u = String(url);
+      if (u.endsWith("/attachments")) return Response.json({ data: [{ filename: "house.jpg", content_type: "image/jpeg", download_url: "https://cdn.example/house.jpg" }] });
+      if (u.includes("/emails/receiving/")) return Response.json({ text: "Hello", html: "<p>Hello</p>", from: "Sam Lee <sam@example.com>", to: ["support@burinandco.com"], subject: "Question" });
+      if (u === "https://api.resend.com/emails") { sends.push({ headers: init.headers, body: JSON.parse(init.body) }); return Response.json({ id: "sent_1" }); }
+      return new Response("{}", { status: 503 });
+    });
+    const res = await inbound(resendRequest({ type: "email.received", data: { email_id: "e9", from: "sam@example.com", to: ["support@burinandco.com"], subject: "Question" } }));
+    expect(await res.text()).toBe("stored");
+    expect(sends).toHaveLength(1);
+    expect(sends[0].headers["Idempotency-Key"]).toBe("fwd-e9");
+    expect(sends[0].body).toMatchObject({ to: ["david@tenfoldcommerce.com"], reply_to: "sam@example.com", subject: "Question", from: "Sam Lee via Burin & Co. <support@burinandco.com>" });
+    expect(sends[0].body.attachments[0]).toMatchObject({ filename: "house.jpg", path: "https://cdn.example/house.jpg" });
+    expect(sends[0].body.html).toContain("<p>Hello</p>");
+
+    // Other brands' mail is not forwarded.
+    await inbound(resendRequest({ type: "email.received", data: { email_id: "e10", from: "a@b.com", to: ["hello@namesakeportraits.com"], subject: "Hi" } }));
+    expect(sends).toHaveLength(1);
+    env.delete("FORWARD_INBOUND_TO");
+  });
+
+  it("sends no copy when FORWARD_INBOUND_TO is not set", async () => {
+    const urls: string[] = [];
+    vi.mocked(fetch).mockImplementation(async (url: any) => { urls.push(String(url)); return Response.json({ text: "Hi", from: "x@example.com", subject: "S" }); });
+    await inbound(resendRequest({ type: "email.received", data: { email_id: "e11", from: "x@example.com", to: ["support@burinandco.com"], subject: "S" } }));
+    expect(urls.some((u) => u === "https://api.resend.com/emails")).toBe(false);
+  });
+
   it("classifies urgency", () => {
     expect(classify("Chargeback", "").urgency).toBe("urgent");
     expect(classify("Please refund", "").category).toBe("refund_request");

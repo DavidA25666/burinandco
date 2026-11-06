@@ -9,6 +9,7 @@ import { opsStore } from "./ops-store.mts";
 import { deliver, esc, SITE_DOMAIN, supportAddress } from "./email.mts";
 import { listOrders, type Order } from "./store.mts";
 import { shortName, shortId, itemName } from "./ops/economics.mts";
+import { forwardReceived } from "./forward.mts";
 
 export interface InboxMessage { id: string; dir: "in" | "out"; at: string; from: string; to: string; subject: string; text: string; messageId: string | null; sentBy?: string | null }
 export interface Conversation {
@@ -112,6 +113,11 @@ export async function receiveEmail(data: any): Promise<"stored" | "ignored" | "d
   if (emailId && (await store.get(`inbox-seen/${emailId}`))) return "duplicate";
 
   const full = emailId ? await fetchBody(emailId).catch((e) => { console.error(e); return null; }) : null;
+  // A copy for the owner's own mailbox (FORWARD_INBOUND_TO). Never blocks filing the mail for HQ.
+  if (emailId) {
+    const fwd = await forwardReceived(emailId, { from: full?.from ?? data?.from, to: full?.to ?? data?.to, cc: data?.cc, subject: full?.subject ?? data?.subject, text: full?.text ?? data?.text, html: full?.html }, { brand: "Burin & Co.", via: supportAddress(), ownDomains: [SITE_DOMAIN] });
+    if (fwd === "failed") await store.setJSON(`forward-fail/${emailId}`, { at: new Date().toISOString() }).catch(() => {});
+  }
   const { name, email } = parseAddress(String(full?.from ?? data?.from ?? ""));
   const subject = String(full?.subject ?? data?.subject ?? "(no subject)").slice(0, 300);
   const text = (full?.text || (full?.html ? stripHtml(full.html) : "") || String(data?.text ?? "")).slice(0, 20_000);

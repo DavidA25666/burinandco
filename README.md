@@ -66,6 +66,7 @@ Set these in Netlify: **Project configuration → Environment variables**. Never
 | `CLARITY_PROJECT_ID` | Microsoft Clarity project ID (Settings → Overview). Public; loads only after Accept. |
 | `RESEND_RECEIVING_API_KEY` | Resend key that can read received emails (falls back to `RESEND_API_KEY`). |
 | `SUPPORT_EMAIL` | Optional. Default `support@burinandco.com`. |
+| `FORWARD_INBOUND_TO` | Optional. Comma-separated addresses that get a copy of every email sent to the store's domain (e.g. `david@tenfoldcommerce.com`). The mail still lands in HQ's Inbox. Reply-To is the customer. Remove it to stop the copies. |
 | `HQ_SITE_SLUG` | Optional. Default `burinandco` (the slug HQ shows for the site). |
 
 ## FinerWorks setup
@@ -107,7 +108,8 @@ Burin & Co. is run from Tenfold HQ (hq.tenfoldcommerce.com) through the signed A
 - AI: every Replicate run is logged with its estimated cost. The model lab (`/lab.html`) is always on for
   the owners; HQ sees its spend but can't switch it off. There's a monthly AI budget (alert at 75%). No AI runs on a schedule.
 - Support mail: customer emails reply to `support@burinandco.com`. Resend receives it and posts to
-  `/api/inbound/email`; mail for the other Tenfold brands is ignored.
+  `/api/inbound/email`; mail for the other Tenfold brands is ignored. If `FORWARD_INBOUND_TO` is set, a copy
+  of each email also goes to those addresses (Reply-To the customer); HQ can't switch this off.
 
 Run `npm test` and `npm run typecheck` before pushing.
 
