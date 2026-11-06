@@ -64,6 +64,7 @@ Set these in Netlify: **Project configuration → Environment variables**. Never
 | `META_CAPI_ACCESS_TOKEN` | Conversions API access token (the older name `META_CAPI_TOKEN` also works; same name as Namesake) for that Pixel (Events Manager → Settings → Generate access token). Server-only. |
 | `META_TEST_EVENT_CODE` | Optional, temporary: sends CAPI events to Events Manager → Test events while you check them. Remove after. |
 | `CLARITY_PROJECT_ID` | Microsoft Clarity project ID (Settings → Overview). Public; loads only after Accept. |
+| `GOOGLE_PLACES_API_KEY` | Google Cloud API key with **Places API (New)** enabled, used by `/api/address` for street address suggestions on the Ship to form. Server-side only. Optional: without it the address fields are plain fields. |
 | `RESEND_RECEIVING_API_KEY` | Resend key that can read received emails (falls back to `RESEND_API_KEY`). |
 | `SUPPORT_EMAIL` | Optional. Default `support@burinandco.com`. |
 | `HQ_SITE_SLUG` | Optional. Default `burinandco` (the slug HQ shows for the site). |

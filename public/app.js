@@ -138,6 +138,7 @@
     }
     update();
   }).catch(() => {});
+  if (window.addressAutocomplete) window.addressAutocomplete({ line1: "ship_line1", line2: "ship_line2", city: "ship_city", state: "ship_state", zip: "ship_zip" });
 })();
 
 // Visit counter and ad attribution: keeps the first landing's UTMs for 30 days, and the latest ones.
