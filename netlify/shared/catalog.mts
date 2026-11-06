@@ -96,6 +96,13 @@ export function categoryInfo(id: string) {
   return CATEGORIES[id as CategoryId] ?? CATEGORIES.other;
 }
 
+// The word customers see ("car", "yacht"), or null for "Something else", where the generic
+// "subject" would read oddly ("Your subject, ready for review"); callers then say "your portrait".
+export function customerSubject(id: string): string | null {
+  const c = CATEGORIES[id as CategoryId];
+  return c && id !== "other" ? c.subject : null;
+}
+
 export const FRAMES: Record<FrameId, string> = { walnut: "Dark walnut", ebony: "Black oak", olive: "Olive, 2½-inch" };
 
 export const COLLECTOR_PRICE = 30000;

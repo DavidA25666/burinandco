@@ -3,7 +3,7 @@ import { getOrder, saveOrder, log } from "../shared/store.mts";
 import { verify } from "../shared/sign.mts";
 import { chargeSavedCard, createPaymentCheckout, StripeError } from "../shared/stripe.mts";
 import { notifyOwner, button, esc } from "../shared/email.mts";
-import { SIZES, FRAMES, styleInfo, categoryInfo, RECEIPT_NAME } from "../shared/catalog.mts";
+import { SIZES, FRAMES, styleInfo, customerSubject, RECEIPT_NAME } from "../shared/catalog.mts";
 import { sendPurchase, purchaseEventId } from "../shared/meta.mts";
 
 export default async (req: Request) => {
@@ -24,7 +24,7 @@ export default async (req: Request) => {
       style: styleInfo(order.style).name,
       size: SIZES[order.size].name,
       frame: FRAMES[order.frame],
-      subject: categoryInfo(order.category).subject,
+      subject: customerSubject(order.category),
       plaque: order.plaque,
       caption: order.caption ?? "",
       version: order.renders.length,

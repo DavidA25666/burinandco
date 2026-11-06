@@ -6,7 +6,7 @@ import { getOrder, saveOrder, log, ordersStore, type Order } from "./store.mts";
 import { triggerRender } from "./render-trigger.mts";
 import { sendPurchase } from "./meta.mts";
 import { notifyOwner, sendEmail, button, esc } from "./email.mts";
-import { SIZES, FRAMES, styleInfo, categoryInfo } from "./catalog.mts";
+import { SIZES, FRAMES, styleInfo, customerSubject } from "./catalog.mts";
 
 const money = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
@@ -29,7 +29,7 @@ export async function handleCompletedSession(origin: string, s: any) {
   if (s.status && s.status !== "complete") return;
   const order = await getOrder(s.metadata?.orderId ?? "");
   if (!order) return;
-  const description = `a ${SIZES[order.size].name} ${esc(styleInfo(order.style).name)} portrait of their ${categoryInfo(order.category).subject}`;
+  const description = `a ${SIZES[order.size].name} ${esc(styleInfo(order.style).name)} portrait of their ${customerSubject(order.category) ?? "subject (Something else)"}`;
 
   // New order: card saved, nothing charged yet. Start the render.
   if (s.mode === "setup" && order.status === "awaiting_card" && (await claim("setup", order.id))) {
@@ -45,7 +45,7 @@ export async function handleCompletedSession(origin: string, s: any) {
       to: order.customer.email,
       subject: "We've received your Burin & Co. commission",
       html: `<p>${esc(order.customer.name.split(" ")[0])},</p>
-        <p>Thank you. We've received your photograph and started on the ${esc(styleInfo(order.style).name)} portrait of your ${categoryInfo(order.category).subject}.</p>
+        <p>Thank you. We've received your photograph and started on ${customerSubject(order.category) ? `the ${esc(styleInfo(order.style).name)} portrait of your ${customerSubject(order.category)}` : `your ${esc(styleInfo(order.style).name)} portrait`}.</p>
         <p style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#555">
           ${SIZES[order.size].name}, ${esc(FRAMES[order.frame].toLowerCase())} frame<br>
           ${order.caption ? `Caption: ${esc(order.caption)}<br>` : ""}

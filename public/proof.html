@@ -103,7 +103,7 @@
         frame.style.setProperty("--mw", `${(150 / outerW).toFixed(2)}cqw`);
       };
       if (d.renderUrl) img.src = d.renderUrl;
-      const intro = `<h1>Your ${esc(d.subject)}, ready for review.</h1>
+      const intro = `<h1>Your ${esc(d.subject || "portrait")}, ready for review.</h1>
         <p class="lede">${esc(d.style)}, ${esc(d.size)}, ${esc(d.frame.toLowerCase())} frame${d.updatedFromNotes ? ". Updated with your notes." : "."}</p>`;
       if (!d.awaitingResponse) {
         panel.innerHTML = intro + `<p class="done">Thanks, we have your response to this proof. We'll email you if anything else is needed.</p>`;

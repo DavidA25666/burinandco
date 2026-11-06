@@ -3,7 +3,7 @@ import { saveOrder, log, type Order } from "./store.mts";
 import { fileUrl, sign } from "./sign.mts";
 import { triggerRender, triggerPrintFile } from "./render-trigger.mts";
 import { sendEmail, button, esc } from "./email.mts";
-import { SIZES, FRAMES, styleInfo, categoryInfo } from "./catalog.mts";
+import { SIZES, FRAMES, styleInfo, customerSubject } from "./catalog.mts";
 import { cleanCaption } from "./caption.mts";
 import { createFinerworksOrder, finerworksCode, codeEnvName, fetchFinerworksStatus } from "./finerworks.mts";
 import { refundPayment, paymentFee } from "./stripe.mts";
@@ -41,14 +41,14 @@ export type OrderAction = typeof ORDER_ACTIONS[number];
 function proofEmail(origin: string, order: Order) {
   const link = `${origin}/proof.html?o=${order.id}&t=${sign(`proof:${order.id}`)}`;
   const first = esc(order.customer.name.split(" ")[0]);
-  const subject = categoryInfo(order.category).subject;
+  const subject = customerSubject(order.category);
   // Versions the studio makes before the customer has seen anything are invisible to them:
   // only say "updated" once they've had a proof, and only mention notes if they sent some.
   const askedForChanges = (order.changeRequests?.length ?? 0) > 0;
   const updated = askedForChanges || !!order.proofSentAt;
   const opening = askedForChanges ? "We've updated your portrait based on your notes."
-    : updated ? `We've made an updated version of the portrait of your ${subject}.`
-    : `The portrait of your ${subject} is ready for your review.`;
+    : updated ? `We've made an updated version of ${subject ? `the portrait of your ${subject}` : "your portrait"}.`
+    : `${subject ? `The portrait of your ${subject}` : "Your portrait"} is ready for your review.`;
   return {
     to: order.customer.email,
     subject: updated ? "Your updated Burin & Co. proof" : "Your Burin & Co. proof is ready",
