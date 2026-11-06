@@ -1,7 +1,7 @@
 // Sends email through Resend (resend.com). Needs RESEND_API_KEY and FROM_EMAIL.
 // Every customer email carries Reply-To support@burinandco.com, so replies land in Tenfold HQ's Inbox.
 // A send that fails is kept in the outbox; HQ's "flush email outbox" retries it.
-import { getSettings, queueFailedEmail } from "./ops-store.mts";
+import { queueFailedEmail } from "./ops-store.mts";
 
 export function esc(s: string) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -43,13 +43,11 @@ export async function sendEmail(opts: EmailOpts) {
   return r.ok;
 }
 
-// Owner emails are off by default: everything they said is an HQ alert or admin row now.
-// An owner can turn them back on in HQ (Admin → Settings → Owner emails).
+// Owner emails (new order, ready to review, approved, change request) go to OWNER_EMAIL whenever it's set.
+// HQ can't turn them off: to stop them, clear OWNER_EMAIL in Netlify.
 export async function notifyOwner(subject: string, html: string) {
   const to = Netlify.env.get("OWNER_EMAIL");
   if (!to) return;
-  const settings = await getSettings().catch(() => null);
-  if (!settings?.ownerEmails) return;
   await sendEmail({ to, subject, html, replyTo: null });
 }
 

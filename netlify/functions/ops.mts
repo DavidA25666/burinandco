@@ -123,7 +123,6 @@ async function adminRead(section: string, q: URLSearchParams, origin: string) {
       const row = (id: string, label: string, value: string, help: string) => ({ id, setting: id, label, value, help, status: "ok", actions: ["set_setting"] });
       return {
         items: [
-          row("owner_emails", "Owner emails", settings.ownerEmails ? "on" : "off", "Emails to OWNER_EMAIL for new orders, reviews and approvals. Off: they are HQ alerts instead."),
           row("maintenance", "Maintenance mode", settings.maintenance ? "on" : "off", "On closes checkout with a short notice on the site."),
           row("headline", "Homepage headline", settings.headline ?? "(default)", "Plain text, 3 to 140 characters. Send 'default' to restore."),
           row("owner_test_emails", "Owner / test emails", settings.ownerTestEmails.join(", ") || "(none)", "Orders from these emails are test orders and are left out of HQ's numbers."),
@@ -313,11 +312,11 @@ async function runAction(body: any, origin: string, requestId: string | null): P
       const key = String(params.setting ?? "");
       const value = String(params.value ?? "").trim();
       if (!(SETTING_KEYS as readonly string[]).includes(key)) return no(400, "invalid_params", `Unknown setting "${key}".`);
-      if (key === "owner_emails" || key === "maintenance") {
+      if (key === "maintenance") {
         const v = onOff(value);
         if (v == null) return no(400, "invalid_params", "Use on or off.");
-        await updateSettings(by, `set_setting:${key}`, (s) => { if (key === "owner_emails") s.ownerEmails = v; else s.maintenance = v; });
-        return ok(`${key === "owner_emails" ? "Owner emails" : "Maintenance mode"} ${v ? "on" : "off"}.`);
+        await updateSettings(by, "set_setting:maintenance", (s) => { s.maintenance = v; });
+        return ok(`Maintenance mode ${v ? "on" : "off"}.`);
       }
       if (key === "headline") {
         if (value.toLowerCase() === "default") { await updateSettings(by, "set_setting:headline", (s) => { s.headline = null; }); return ok("Headline restored to the default."); }
