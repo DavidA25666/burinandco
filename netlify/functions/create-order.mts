@@ -19,6 +19,10 @@ function readUtm(raw: FormDataEntryValue | null): Utm | null {
 }
 import { cleanCaption } from "../shared/caption.mts";
 import { adContext } from "../shared/meta.mts";
+import { verify } from "../shared/sign.mts";
+import { triggerRender } from "../shared/render-trigger.mts";
+import { sendEmail } from "../shared/email.mts";
+import { normEmail, claimFreeProof, markFree, freeStartedEmail, discountFor, applyDiscount } from "../shared/recovery.mts";
 
 const bad = (error: string, status = 400) => Response.json({ error }, { status });
 
@@ -54,6 +58,12 @@ export default async (req: Request, context: Context) => {
     if (!/^\d{5}(-\d{4})?$/.test(shipping.address.postal_code)) return bad("Check the ZIP code.");
     if (!STYLES[style] || !SIZES[size] || SIZES[size].retired || !FRAMES[frame] || frame === "olive" || !CATEGORIES[category]) return bad("Choose a subject, style, size and frame.");
 
+    // A free proof (no card) only comes from the link in a reminder email, signed for that address.
+    const freeToken = String(form.get("free") ?? "");
+    if (freeToken && !verify(`freelead:${normEmail(email)}`, freeToken)) {
+      return bad("Your free-proof link is for a different email address. Use the address we emailed, or remove the free proof to check out as usual.");
+    }
+
     const id = crypto.randomUUID();
     const photoKey = `photo/${id}`;
     await filesStore().set(photoKey, await photo.arrayBuffer());
@@ -75,7 +85,22 @@ export default async (req: Request, context: Context) => {
       } : null,
     };
 
+    await applyDiscount(order, await discountFor(email));
     const origin = new URL(req.url).origin;
+    if (freeToken) {
+      if (!(await claimFreeProof(email, id))) return bad("This email address has already had its free proof. Remove it to check out as usual.", 409);
+      markFree(order, "lead");
+      await saveOrder(order);
+      try {
+        await triggerRender(origin, id, null);
+      } catch (e) {
+        order.status = "render_failed";
+        order.lastError = e instanceof Error ? e.message : String(e);
+        await saveOrder(order);
+      }
+      await sendEmail(freeStartedEmail(order));
+      return Response.json({ redirectUrl: "/thanks.html?free=1" });
+    }
     const session = await createCardSetup({
       orderId: id,
       name,

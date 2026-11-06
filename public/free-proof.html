@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Your free proof · Burin & Co.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ops.css">
+</head>
+<body>
+<header class="site-head"><div class="wrap"><a class="brand" href="/">Burin &amp; Co.</a></div></header>
+<main><section><div class="wrap narrow" id="panel"><p>Loading…</p></div></section></main>
+<script>
+(() => {
+  // From the reminder email. Opening the page changes nothing (mail scanners open links too);
+  // the button starts the drawing.
+  const p = new URLSearchParams(location.search);
+  const o = p.get("o"), t = p.get("t");
+  const panel = document.getElementById("panel");
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const started = `<h1>We're drawing it now.</h1>
+    <p class="lede">Within 48 hours (often within 24) you'll get an email with your proof.</p>
+    <p>There's no card on file and nothing to pay unless you approve it. If anything needs changing, just tell us.</p>
+    <a class="btn secondary" href="/">Back to home</a>`;
+  fetch(`/api/free-proof?o=${encodeURIComponent(o || "")}&t=${encodeURIComponent(t || "")}`)
+    .then(async (r) => { const d = await r.json(); if (!r.ok) throw new Error(d.error); return d; })
+    .then((d) => {
+      if (d.started) { panel.innerHTML = started; return; }
+      const price = "$" + (d.price / 100).toLocaleString("en-US");
+      panel.innerHTML = `<h1>${esc(d.firstName)}, we'll draw your ${esc(d.subject)} first.</h1>
+        <p class="lede">${esc(d.style)}, ${esc(d.size)}, ${esc(d.frame.toLowerCase())} frame. We still have your photograph and details.</p>
+        <p>No card needed. Your proof arrives by email within 48 hours (often within 24). If you love it, approve it and pay ${price} then. If not, you owe nothing.</p>
+        <p><button class="btn" id="go">Draw my free proof</button></p>
+        <p class="form-error" id="err" role="alert"></p>
+        <p class="hint">One free proof per customer.</p>`;
+      document.getElementById("go").onclick = async (e) => {
+        e.target.disabled = true;
+        const err = document.getElementById("err");
+        err.textContent = "";
+        try {
+          const r = await fetch("/api/free-proof", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ o, t }) });
+          const d2 = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(d2.error || "That didn't go through. Try again in a moment.");
+          panel.innerHTML = started;
+        } catch (ex) { err.textContent = ex.message; e.target.disabled = false; }
+      };
+    })
+    .catch((ex) => { panel.innerHTML = `<h1>Link not found</h1><p>${esc(ex.message || "This link isn't valid.")}</p><a class="btn secondary" href="/">Back to home</a>`; });
+})();
+</script>
+<script src="/consent.js"></script>
+</body>
+</html>

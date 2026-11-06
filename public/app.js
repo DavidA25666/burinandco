@@ -77,6 +77,34 @@
     $("photoTxt").innerHTML = "<strong>" + f.name.replace(/[<>&]/g, "") + "</strong><br>Tap to choose a different photo.";
   });
 
+  // Saves the email as soon as it's typed (the notice under the field says so), so someone who
+  // leaves before sending the form can get one reminder with a free-proof link.
+  let leadSent = "";
+  const saveLead = () => {
+    const email = $("email").value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email === leadSent) return;
+    leadSent = email;
+    const data = JSON.stringify({ email, name: $("name").value.trim() });
+    try {
+      if (navigator.sendBeacon) navigator.sendBeacon("/api/lead", new Blob([data], { type: "application/json" }));
+      else fetch("/api/lead", { method: "POST", headers: { "Content-Type": "application/json" }, body: data, keepalive: true });
+    } catch (e) { /* never block the form */ }
+  };
+  $("email").addEventListener("change", saveLead);
+  $("email").addEventListener("blur", saveLead);
+
+  // Arrived from a reminder email's free-proof link: no card page, the proof comes first.
+  const q = new URLSearchParams(location.search);
+  const freeToken = q.get("free");
+  const payLabel = freeToken ? "Request my free proof" : "Continue to request my proof";
+  if (freeToken) {
+    if (q.get("e") && !$("email").value) $("email").value = q.get("e");
+    $("pay").textContent = payLabel;
+    $("freeNote").hidden = false;
+    const fine = $("freeNote").previousElementSibling;
+    if (fine && fine.classList.contains("fine")) fine.hidden = true;
+  }
+
   function showError(msg) {
     $("formErr").textContent = msg;
     $("formErr").hidden = false;
@@ -95,7 +123,7 @@
 
     const btn = $("pay");
     btn.disabled = true;
-    btn.textContent = "Opening secure card page…";
+    btn.textContent = freeToken ? "Sending…" : "Opening secure card page…";
     track("InitiateCheckout", { num_items: 1 });
     try {
       const body = new FormData(form);
@@ -103,14 +131,15 @@
       body.set("utm_first", localStorage.getItem("bc_utm_first") || "");
       body.set("utm_last", localStorage.getItem("bc_utm_last") || "");
       body.set("ad_consent", window.bcConsent && window.bcConsent() ? "granted" : "");
+      if (freeToken) body.set("free", freeToken);
       const res = await fetch("/api/orders", { method: "POST", body });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.checkoutUrl) throw new Error(data.error || "Checkout couldn't start. Try again in a moment.");
-      location.href = data.checkoutUrl;
+      if (!res.ok || !(data.checkoutUrl || data.redirectUrl)) throw new Error(data.error || "Checkout couldn't start. Try again in a moment.");
+      location.href = data.checkoutUrl || data.redirectUrl;
     } catch (ex) {
       showError(ex.message);
       btn.disabled = false;
-      btn.textContent = "Continue to request my proof";
+      btn.textContent = payLabel;
     }
   });
 
