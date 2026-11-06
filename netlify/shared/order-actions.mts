@@ -46,7 +46,7 @@ function proofEmail(origin: string, order: Order) {
   return {
     to: order.customer.email,
     subject: version > 1 ? "Your updated Burin & Co. proof" : "Your Burin & Co. proof is ready",
-    html: `<p>${first},</p><p>${version > 1 ? "We've updated your portrait based on your notes." : `The portrait of your ${subject} is ready for your review.`} Approve it and we'll print and frame it. If anything is off, tell us what to change.</p>${button(link, "Review your proof")}<p>${order.card ? `Your card is charged $${(order.price / 100).toFixed(2)} only when you approve. Changes cost nothing.` : "Nothing prints until you approve it."}</p><p>Burin &amp; Co.</p>`,
+    html: `<p>${first},</p><p>${version > 1 ? "We've updated your portrait based on your notes." : `The portrait of your ${subject} is ready for your review.`} Approve it and we'll print and frame it. If anything is off, tell us what to change.</p>${button(link, "Review your proof")}<p>${order.card ? `Your card is charged $${(order.price / 100).toFixed(2)} only when you approve. Changes cost nothing.` : order.freeProof && !order.paidAt ? `This proof is free. If you approve it, you'll pay $${(order.price / 100).toFixed(2)} on a secure payment page and we'll print it. Changes cost nothing.` : "Nothing prints until you approve it."}</p><p>Burin &amp; Co.</p>`,
   };
 }
 

@@ -70,7 +70,7 @@ export function orderRow(o: Order, s: Settings, ai: Map<string, number>, now?: s
     amount: d(o.price),
     status: issue?.status ?? (o.status === "archived" ? (o.sentToPrintAt ? "fulfilled" : o.paidAt ? "fulfilled" : "refunded") : STATUS[o.status] ?? "pending"),
     orderStatus: o.status,
-    status_label: LABEL[o.status] ?? o.status,
+    status_label: o.freeProof && !o.paidAt && o.status === "payment_due" ? "Approved free proof: waiting on payment" : LABEL[o.status] ?? o.status,
     issue: issue?.issue ?? null,
     createdAt: o.createdAt,
     created_at: o.createdAt,

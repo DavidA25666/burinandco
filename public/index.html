@@ -121,6 +121,7 @@
               <label for="name">Your name <input id="name" name="name" autocomplete="name" required></label>
               <label for="email">Email for your proof <input id="email" name="email" type="email" autocomplete="email" required></label>
             </div>
+            <p class="hint">We'll email your proof here. If you don't finish, we may send one reminder.</p>
             <label class="notes" for="notes">Anything we should know? (optional) <textarea id="notes" name="notes" maxlength="600" rows="2" placeholder="For example: draw it with the hardtop on, or match the second photo's wheels."></textarea></label>
           </fieldset>
 
@@ -151,6 +152,7 @@
           <p class="total"><span>Total</span><strong id="total">$395</strong></p>
           <button class="btn wide" type="submit" id="pay">Continue to request my proof</button>
           <p class="fine">You add a card on the next page, but you aren't charged until you approve your proof. Digital proof within 48 hours (often within 24), with two rounds of changes included.</p>
+          <p id="freeNote" class="fine" hidden><strong>Your free proof:</strong> no card needed now. We draw it first; if you approve it, you pay then on a secure payment page.</p>
           <p id="formErr" class="form-err" role="alert" hidden></p>
         </aside>
       </form>
@@ -228,6 +230,6 @@
 </footer>
 <script src="consent.js"></script>
 <script src="shrink-photo.js?v=2"></script>
-<script src="app.js?v=2"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>

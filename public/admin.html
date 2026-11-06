@@ -150,7 +150,7 @@
 
     $("#detail").innerHTML = `
       <h2 style="margin-bottom:.25rem">${esc(o.customer.name)}</h2>
-      ${badge(o.status)}
+      ${badge(o.status)}${o.freeProof ? ` <span class="badge">${o.paid ? "Free proof, now paid" : "Free proof, no card yet"}</span>` : ""}
       <div class="meta" style="margin-top:.75rem">
         <span>${esc(o.categoryName)}, ${esc(o.styleName)}</span><span>${esc(o.sizeName)}, ${esc(o.frameName.toLowerCase())}</span>
         ${o.collector ? "<span><strong>Collector edition</strong></span>" : ""}

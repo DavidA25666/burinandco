@@ -65,6 +65,10 @@ export interface Order {
   proofSentAt?: string;               // first proof sent
   sentToPrintAt?: string;
   // Meta ads: the buyer's cookie choice at checkout, and what CAPI needs (only kept with consent).
+  // Abandoned-checkout recovery. recovery: the "we'll draw it free" email went out for this unfinished
+  // checkout. freeProof: the proof was drawn with no card on file; the card is taken on approval.
+  recovery?: { sentAt: string } | null;
+  freeProof?: { startedAt: string; via: "order" | "lead" } | null;
   ads?: { consent: boolean; fbp?: string | null; fbc?: string | null; ip?: string | null; ua?: string | null; url?: string | null; purchaseSentAt?: string } | null;
 }
 

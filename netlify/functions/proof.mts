@@ -31,11 +31,13 @@ export default async (req: Request) => {
       renderUrl: latest ? `${origin}/api/proof-image?o=${order.id}&t=${encodeURIComponent(token)}&v=${order.renders.length}&c=${encodeURIComponent(order.caption ?? "")}` : null,
       price: order.price,
       // Orders from before proof-first payment were paid at checkout.
-      prepaid: !order.card,
+      prepaid: !order.card && !order.freeProof,
+      // Drawn free from the reminder email: no card yet, they pay on approval.
+      freeProof: !!order.freeProof && !order.paidAt,
       awaitingResponse: order.status === "proof_sent" || order.status === "payment_due",
       paymentDue: order.status === "payment_due",
       // For the browser Pixel's Purchase event (deduplicated with the server's CAPI event by id).
-      purchase: order.paidAt && order.card ? { eventId: purchaseEventId(order), value: order.price / 100, currency: "USD", size: order.size } : null,
+      purchase: order.paidAt && (order.card || order.freeProof) ? { eventId: purchaseEventId(order), value: order.price / 100, currency: "USD", size: order.size } : null,
     });
   }
 
@@ -65,6 +67,10 @@ export default async (req: Request) => {
         order.status = "payment_due";
         log(order, `Customer approved version ${v}; saved card not charged (${e.message})`);
       }
+    } else if (order.freeProof && !order.paidAt) {
+      // Free proof: no card on file, so approving takes them to a payment page.
+      order.status = "payment_due";
+      log(order, `Customer approved version ${v} (free proof); payment page opened`);
     } else if (!order.card) {
       log(order, `Customer approved version ${v}`);
     }
