@@ -96,6 +96,13 @@ export function categoryInfo(id: string) {
   return CATEGORIES[id as CategoryId] ?? CATEGORIES.other;
 }
 
+// The word customers see ("car", "yacht"), or null for "Something else", where the generic
+// "subject" would read oddly ("Your subject, ready for review"); callers then say "your portrait".
+export function customerSubject(id: string): string | null {
+  const c = CATEGORIES[id as CategoryId];
+  return c && id !== "other" ? c.subject : null;
+}
+
 export const FRAMES: Record<FrameId, string> = { walnut: "Dark walnut", ebony: "Black oak", olive: "Olive, 2½-inch" };
 
 export const COLLECTOR_PRICE = 30000;
@@ -136,6 +143,10 @@ export function buildPrompt(style: string, category: string, customerNotes?: str
   if (adjustment) lines.push(`Adjustments for this version: ${adjustment}`);
   return lines.join("\n");
 }
+
+// What the customer's Stripe receipt and payment page show as the line item (David, 2026-11-06:
+// just the brand, not the product description).
+export const RECEIPT_NAME = "Burin & Co.";
 
 export function productName(o: { style: string; category: string; size: SizeId; frame: FrameId; collector: boolean }) {
   return `Burin & Co. ${styleInfo(o.style).name} portrait of your ${categoryInfo(o.category).subject}: ${SIZES[o.size].name}, ${FRAMES[o.frame].toLowerCase()} frame${o.collector ? ", collector edition" : ""}`;

@@ -9,8 +9,37 @@
 <link rel="stylesheet" href="/ops.css">
 <style>
   .proof { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(2rem, 5vw, 4rem); align-items: start; }
-  .proof .frame { max-width: 460px; }
-  .proof .mat { padding: 9%; }
+  /* The proof, framed the way FinerWorks builds it: 2" moulding, 1.5" Snow White 4-ply mat with a
+     bevelled window. --fw and --mw are set from the real size once the image loads (16x12 shown by default). */
+  .pf { container-type: inline-size; width: 100%; max-width: 560px; }
+  .pf-frame { --fw: 8.7cqw; --mw: 6.5cqw; --wood: #4b2e1c; position: relative; padding: var(--fw); background: var(--wood);
+    box-shadow: 0 3cqw 5cqw -2cqw rgba(0,0,0,.5), 0 .8cqw 1.6cqw rgba(0,0,0,.22); }
+  .pf-frame.ebony { --wood: #1e1b18; }
+  .pf-side { position: absolute; display: block;
+    background:
+      linear-gradient(var(--light), var(--light)),
+      linear-gradient(var(--dir), rgba(0,0,0,.55) 0, rgba(0,0,0,.12) 5%, rgba(255,255,255,.2) 13%, rgba(255,255,255,.06) 28%, rgba(0,0,0,.04) 48%, rgba(0,0,0,.2) 74%, rgba(0,0,0,.1) 80%, rgba(255,255,255,.2) 85%, rgba(255,255,255,.08) 89%, rgba(0,0,0,.6) 100%),
+      repeating-linear-gradient(var(--grain), rgba(0,0,0,.10) 0 1px, transparent 1px 3px, rgba(255,255,255,.035) 3px 4px, transparent 4px 7px),
+      repeating-linear-gradient(calc(var(--grain) + 1.2deg), rgba(0,0,0,.07) 0 2px, transparent 2px 13px),
+      var(--wood); }
+  .pf-side.t { top: 0; left: 0; right: 0; height: var(--fw); --dir: to bottom; --grain: 0deg; --light: rgba(255,255,255,.07);
+    clip-path: polygon(0 0, 100% 0, calc(100% - var(--fw)) 100%, var(--fw) 100%); }
+  .pf-side.b { bottom: 0; left: 0; right: 0; height: var(--fw); --dir: to top; --grain: 0deg; --light: rgba(0,0,0,.2);
+    clip-path: polygon(var(--fw) 0, calc(100% - var(--fw)) 0, 100% 100%, 0 100%); }
+  .pf-side.l { top: 0; bottom: 0; left: 0; width: var(--fw); --dir: to right; --grain: 90deg; --light: rgba(255,255,255,0);
+    clip-path: polygon(0 0, 100% var(--fw), 100% calc(100% - var(--fw)), 0 100%); }
+  .pf-side.r { top: 0; bottom: 0; right: 0; width: var(--fw); --dir: to left; --grain: 90deg; --light: rgba(0,0,0,.12);
+    clip-path: polygon(0 var(--fw), 100% 0, 100% 100%, 0 calc(100% - var(--fw))); }
+  .pf-mat { position: relative; padding: var(--mw); background: linear-gradient(165deg, #fcfbf8, #f2f0ea);
+    box-shadow: inset .5cqw .7cqw 1.2cqw rgba(0,0,0,.32), inset 0 0 0 1px rgba(0,0,0,.25); }
+  /* The 4-ply bevel: a white core cut at 45°, in shade along the top, catching the light along the bottom. */
+  .pf-window { position: relative; border: .7cqw solid; border-color: #d9d5ca #e9e6de #ffffff #f4f2ec;
+    box-shadow: 0 0 0 1px rgba(0,0,0,.07); }
+  .pf-window::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.2), inset .25cqw .35cqw .6cqw rgba(0,0,0,.16); }
+  .pf-window img { display: block; width: 100%; height: auto; }
+  .pf-glass { position: absolute; inset: var(--fw); pointer-events: none;
+    background: linear-gradient(118deg, rgba(255,255,255,0) 30%, rgba(255,255,255,.06) 42%, rgba(255,255,255,0) 58%); }
   .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1.5rem 0; }
   #change-box { display: none; margin-top: 1rem; }
   #change-box.open { display: block; }
@@ -21,7 +50,11 @@
 <body>
 <header class="site-head"><div class="wrap"><a class="brand" href="/">Burin &amp; Co.</a></div></header>
 <main><section style="background:var(--wall)"><div class="wrap proof">
-  <div class="frame" id="frame"><div class="mat"><img id="render" alt="Your portrait proof" oncontextmenu="return false" draggable="false"></div></div>
+  <div class="pf"><div class="pf-frame walnut" id="frame">
+    <i class="pf-side t"></i><i class="pf-side r"></i><i class="pf-side b"></i><i class="pf-side l"></i>
+    <div class="pf-mat"><div class="pf-window"><img id="render" alt="Your portrait proof" oncontextmenu="return false" draggable="false"></div></div>
+    <span class="pf-glass"></span>
+  </div></div>
   <div id="panel"><p>Loading your proof…</p></div>
 </div></section></main>
 
@@ -57,10 +90,21 @@
     .then(async (r) => { const d = await r.json(); if (!r.ok) throw new Error(d.error); return d; })
     .then((d) => {
       firePurchase(d.purchase);
-      document.getElementById("frame").className = `frame ${d.frame === "Black oak" ? "ebony" : "walnut"}`;
-      if (d.renderUrl) document.getElementById("render").src = d.renderUrl;
-      const intro = `<h1>Your ${esc(d.subject)}, ready for review.</h1>
-        <p class="lede">${esc(d.style)}, ${esc(d.size)}, ${esc(d.frame.toLowerCase())} frame${d.version > 1 ? `. This is version ${d.version}.` : "."}</p>`;
+      const frame = document.getElementById("frame");
+      frame.className = `pf-frame ${d.frame === "Black oak" ? "ebony" : "walnut"}`;
+      const img = document.getElementById("render");
+      // True proportions: the frame is 3" larger than the print (1.5" of mat a side) plus a 2" moulding.
+      img.onload = () => {
+        const dims = (d.size.match(/\d+(\.\d+)?/g) || []).map(Number);
+        if (dims.length < 2) return;
+        const printW = img.naturalWidth >= img.naturalHeight ? Math.max(...dims) : Math.min(...dims);
+        const outerW = printW + 3 + 4;
+        frame.style.setProperty("--fw", `${(200 / outerW).toFixed(2)}cqw`);
+        frame.style.setProperty("--mw", `${(150 / outerW).toFixed(2)}cqw`);
+      };
+      if (d.renderUrl) img.src = d.renderUrl;
+      const intro = `<h1>Your ${esc(d.subject || "portrait")}, ready for review.</h1>
+        <p class="lede">${esc(d.style)}, ${esc(d.size)}, ${esc(d.frame.toLowerCase())} frame${d.updatedFromNotes ? ". Updated with your notes." : "."}</p>`;
       if (!d.awaitingResponse) {
         panel.innerHTML = intro + `<p class="done">Thanks, we have your response to this proof. We'll email you if anything else is needed.</p>`;
         return;
