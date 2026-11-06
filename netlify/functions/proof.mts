@@ -3,7 +3,7 @@ import { getOrder, saveOrder, log } from "../shared/store.mts";
 import { verify } from "../shared/sign.mts";
 import { chargeSavedCard, createPaymentCheckout, StripeError } from "../shared/stripe.mts";
 import { notifyOwner, button, esc } from "../shared/email.mts";
-import { SIZES, FRAMES, styleInfo, categoryInfo, productName } from "../shared/catalog.mts";
+import { SIZES, FRAMES, styleInfo, categoryInfo, RECEIPT_NAME } from "../shared/catalog.mts";
 import { sendPurchase, purchaseEventId } from "../shared/meta.mts";
 
 export default async (req: Request) => {
@@ -28,6 +28,8 @@ export default async (req: Request) => {
       plaque: order.plaque,
       caption: order.caption ?? "",
       version: order.renders.length,
+      // The customer only hears about versions after asking for changes; earlier studio retries stay internal.
+      updatedFromNotes: (order.changeRequests?.length ?? 0) > 0,
       renderUrl: latest ? `${origin}/api/proof-image?o=${order.id}&t=${encodeURIComponent(token)}&v=${order.renders.length}&c=${encodeURIComponent(order.caption ?? "")}` : null,
       price: order.price,
       // Orders from before proof-first payment were paid at checkout.
@@ -53,7 +55,7 @@ export default async (req: Request) => {
       try {
         const pi = await chargeSavedCard({
           orderId: order.id, customer: order.card.customer, paymentMethod: order.card.paymentMethod,
-          amount: order.price, description: productName(order), email: order.customer.email, attempt: order.chargeAttempts,
+          amount: order.price, description: RECEIPT_NAME, email: order.customer.email, attempt: order.chargeAttempts,
         });
         if (pi.status !== "succeeded") throw new StripeError(`Payment ${pi.status}`, pi.status);
         order.paymentIntentId = pi.id;
@@ -72,7 +74,7 @@ export default async (req: Request) => {
     if (order.status === "payment_due") {
       const session = await createPaymentCheckout({
         orderId: order.id, customer: order.card?.customer, email: order.customer.email, amount: order.price,
-        productName: productName(order),
+        productName: RECEIPT_NAME,
         successUrl: `${origin}/proof.html?o=${order.id}&t=${encodeURIComponent(token)}&session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${origin}/proof.html?o=${order.id}&t=${encodeURIComponent(token)}`,
       });

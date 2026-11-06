@@ -39,14 +39,20 @@ export const ORDER_ACTIONS = ["regenerate", "send_proof", "prepare_print", "send
 export type OrderAction = typeof ORDER_ACTIONS[number];
 
 function proofEmail(origin: string, order: Order) {
-  const version = order.renders.length;
   const link = `${origin}/proof.html?o=${order.id}&t=${sign(`proof:${order.id}`)}`;
   const first = esc(order.customer.name.split(" ")[0]);
   const subject = categoryInfo(order.category).subject;
+  // Versions the studio makes before the customer has seen anything are invisible to them:
+  // only say "updated" once they've had a proof, and only mention notes if they sent some.
+  const askedForChanges = (order.changeRequests?.length ?? 0) > 0;
+  const updated = askedForChanges || !!order.proofSentAt;
+  const opening = askedForChanges ? "We've updated your portrait based on your notes."
+    : updated ? `We've made an updated version of the portrait of your ${subject}.`
+    : `The portrait of your ${subject} is ready for your review.`;
   return {
     to: order.customer.email,
-    subject: version > 1 ? "Your updated Burin & Co. proof" : "Your Burin & Co. proof is ready",
-    html: `<p>${first},</p><p>${version > 1 ? "We've updated your portrait based on your notes." : `The portrait of your ${subject} is ready for your review.`} Approve it and we'll print and frame it. If anything is off, tell us what to change.</p>${button(link, "Review your proof")}<p>${order.card ? `Your card is charged $${(order.price / 100).toFixed(2)} only when you approve. Changes cost nothing.` : "Nothing prints until you approve it."}</p><p>Burin &amp; Co.</p>`,
+    subject: updated ? "Your updated Burin & Co. proof" : "Your Burin & Co. proof is ready",
+    html: `<p>${first},</p><p>${opening} Approve it and we'll print and frame it. If anything is off, tell us what to change.</p>${button(link, "Review your proof")}<p>${order.card ? `Your card is charged $${(order.price / 100).toFixed(2)} only when you approve. Changes cost nothing.` : "Nothing prints until you approve it."}</p><p>Burin &amp; Co.</p>`,
   };
 }
 

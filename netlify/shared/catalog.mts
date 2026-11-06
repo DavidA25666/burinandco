@@ -137,6 +137,10 @@ export function buildPrompt(style: string, category: string, customerNotes?: str
   return lines.join("\n");
 }
 
+// What the customer's Stripe receipt and payment page show as the line item (David, 2026-11-06:
+// just the brand, not the product description).
+export const RECEIPT_NAME = "Burin & Co.";
+
 export function productName(o: { style: string; category: string; size: SizeId; frame: FrameId; collector: boolean }) {
   return `Burin & Co. ${styleInfo(o.style).name} portrait of your ${categoryInfo(o.category).subject}: ${SIZES[o.size].name}, ${FRAMES[o.frame].toLowerCase()} frame${o.collector ? ", collector edition" : ""}`;
 }
