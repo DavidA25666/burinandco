@@ -178,3 +178,66 @@ describe("unsubscribe", () => {
     expect(emails).toEqual([]);
   });
 });
+
+describe("the 10% reminder", () => {
+  const later = (h: number) => new Date(Date.now() + h * 3_600_000);
+
+  it("goes 2 days after the first email, once, and takes 10% off the unfinished order", async () => {
+    useSecret();
+    const { emails } = services();
+    const o = abandoned({ price: 39500 });
+    seed(o);
+    await runRecovery(ORIGIN);
+    expect(emails).toHaveLength(1);
+    await runRecovery(ORIGIN, later(24));          // too soon
+    expect(emails).toHaveLength(1);
+    await runRecovery(ORIGIN, later(49));
+    expect(emails).toHaveLength(2);
+    expect(emails[1].subject).toContain("10% off");
+    expect(emails[1].html).toContain(`/free-proof.html?o=${o.id}`);
+    expect(readOrder(o.id)).toMatchObject({ price: 35500, discount: { pct: 10, fullPriceCents: 39500 } });
+    await runRecovery(ORIGIN, later(60));          // never twice
+    expect(emails).toHaveLength(2);
+  });
+
+  it("points a waiting free proof back to the proof page, at 10% off", async () => {
+    useSecret();
+    const { emails } = services();
+    const o = abandoned({ price: 29500 });
+    seed(o);
+    await runRecovery(ORIGIN);
+    seed({ ...readOrder(o.id), status: "proof_sent", freeProof: { startedAt: ago(0), via: "order" }, renders: [{ key: "r", createdAt: ago(0), note: null }], proofSentAt: ago(0) });
+    await runRecovery(ORIGIN, later(49));
+    expect(emails.at(-1).html).toContain(`/proof.html?o=${o.id}`);
+    expect(readOrder(o.id).price).toBe(26500);
+  });
+
+  it("skips anyone who has since saved a card or paid", async () => {
+    useSecret();
+    const { emails } = services();
+    const o = abandoned();
+    seed(o);
+    await runRecovery(ORIGIN);
+    seed({ ...readOrder(o.id), status: "card_saved", card: { customer: "cus_1", paymentMethod: "pm_1" } });
+    await runRecovery(ORIGIN, later(49));
+    expect(emails).toHaveLength(1);
+  });
+
+  it("comes off a new order from that address", async () => {
+    useSecret();
+    services();
+    await saveLead("lee@example.com", "Lee");
+    const key = [...blobs.get("orders")!.keys()].find((k) => k.startsWith("lead/"))!;
+    blobs.get("orders")!.set(key, JSON.stringify({ ...JSON.parse(blobs.get("orders")!.get(key)!), updatedAt: ago(WAIT_MS + 1000) }));
+    await runRecovery(ORIGIN);
+    await runRecovery(ORIGIN, later(49));
+    const f = new FormData();
+    f.set("photo", new File([new Uint8Array(10)], "car.jpg", { type: "image/jpeg" }));
+    for (const [k, v] of Object.entries({ name: "Lee", email: "lee@example.com", style: "studio", size: "16x20", frame: "walnut", category: "automobile",
+      ship_name: "Lee", ship_line1: "1 Main St", ship_city: "Boston", ship_state: "MA", ship_zip: "02101" })) f.set(k, v);
+    expect((await createOrder(new Request(`${ORIGIN}/api/orders`, { method: "POST", body: f }), {} as any)).status).toBe(200);
+    const made = [...blobs.get("orders")!.entries()].filter(([k]) => k.startsWith("order/")).map(([, v]) => JSON.parse(v));
+    expect(made[0].discount?.pct).toBe(10);
+    expect(made[0].price).toBeLessThan(made[0].discount.fullPriceCents);
+  });
+});

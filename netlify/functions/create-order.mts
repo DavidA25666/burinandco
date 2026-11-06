@@ -22,7 +22,7 @@ import { adContext } from "../shared/meta.mts";
 import { verify } from "../shared/sign.mts";
 import { triggerRender } from "../shared/render-trigger.mts";
 import { sendEmail } from "../shared/email.mts";
-import { normEmail, claimFreeProof, markFree, freeStartedEmail } from "../shared/recovery.mts";
+import { normEmail, claimFreeProof, markFree, freeStartedEmail, discountFor, applyDiscount } from "../shared/recovery.mts";
 
 const bad = (error: string, status = 400) => Response.json({ error }, { status });
 
@@ -85,6 +85,7 @@ export default async (req: Request, context: Context) => {
       } : null,
     };
 
+    await applyDiscount(order, await discountFor(email));
     const origin = new URL(req.url).origin;
     if (freeToken) {
       if (!(await claimFreeProof(email, id))) return bad("This email address has already had its free proof. Remove it to check out as usual.", 409);

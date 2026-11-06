@@ -60,7 +60,7 @@ Set these in Netlify: **Project configuration → Environment variables**. Never
 | `RESEND_INBOUND_WEBHOOK_SECRET` | Signing secret of the Resend webhook for `email.received` (`whsec_...`). |
 | `STRIPE_ACCOUNT_ID` | Burin's Stripe account id (`acct_…`), not secret. Reported in `/api/ops/health` → `stripe.account` (§2a). |
 | `OWNER_TEST_EMAILS` | Comma list of the owners' own emails. Orders from them are test orders, left out of revenue and profit in HQ (added to the Owner / test emails store setting). |
-| `ABANDONED_CHECKOUT_EMAILS` | Set to `off` to stop the abandoned-checkout reminder (one email, about an hour after someone leaves checkout, offering a free proof with no card). On when unset. |
+| `ABANDONED_CHECKOUT_EMAILS` | Set to `off` to stop the abandoned-checkout reminders: one email about an hour after someone leaves checkout, offering a free proof with no card, then one 10%-off email 2 days later if they still haven't paid. On when unset. |
 | `META_PIXEL_ID` | Burin's Meta Pixel ID (Events Manager). Public; loads only after a visitor accepts cookies. |
 | `META_CAPI_ACCESS_TOKEN` | Conversions API access token (the older name `META_CAPI_TOKEN` also works; same name as Namesake) for that Pixel (Events Manager → Settings → Generate access token). Server-only. |
 | `META_TEST_EVENT_CODE` | Optional, temporary: sends CAPI events to Events Manager → Test events while you check them. Remove after. |

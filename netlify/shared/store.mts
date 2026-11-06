@@ -69,6 +69,7 @@ export interface Order {
   // checkout. freeProof: the proof was drawn with no card on file; the card is taken on approval.
   recovery?: { sentAt: string } | null;
   freeProof?: { startedAt: string; via: "order" | "lead" } | null;
+  discount?: { pct: number; fullPriceCents: number; at: string } | null; // the reminder's 10%; price is already reduced
   ads?: { consent: boolean; fbp?: string | null; fbc?: string | null; ip?: string | null; ua?: string | null; url?: string | null; purchaseSentAt?: string } | null;
 }
 
