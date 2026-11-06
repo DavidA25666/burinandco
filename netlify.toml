@@ -7,8 +7,9 @@
 
 # Speed. Netlify's CDN already caches every static file and purges it on each deploy; these
 # headers add browser caching. File names aren't content-hashed (there is no build step), so
-# nothing is marked immutable: images are kept a week, CSS and JS an hour, both refreshed in
-# the background.
+# nothing is marked immutable. Images are kept a week. CSS and JS are re-checked on every page
+# load (a cheap 304 when unchanged): browsers holding an old app.js for an hour, and serving it
+# stale for a day, kept customers on old code after a fix was live.
 [[headers]]
   for = "/img/*"
   [headers.values]
@@ -17,9 +18,9 @@
 [[headers]]
   for = "/*.css"
   [headers.values]
-    Cache-Control = "public, max-age=3600, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/*.js"
   [headers.values]
-    Cache-Control = "public, max-age=3600, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=0, must-revalidate"
