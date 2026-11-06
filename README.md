@@ -44,7 +44,7 @@ Set these in Netlify: **Project configuration → Environment variables**. Never
 |---|---|
 | `SITE_SECRET` | Any long random string (40+ characters), different from Namesake's. Signs proof links and file links. |
 | `ADMIN_PASSWORD` | The password for `/admin.html` and `/lab.html`. |
-| `OWNER_EMAIL` | Where owner notifications go, only if they're turned back on in HQ (off by default). |
+| `OWNER_EMAIL` | Where owner notifications go (new orders, proofs to review, approvals). Leave empty for none. |
 | `FROM_EMAIL` | e.g. `Burin & Co. <studio@burinandco.com>` (must be a Resend-verified domain). |
 | `RESEND_API_KEY` | From Resend. |
 | `STRIPE_SECRET_KEY` | Start with your `sk_test_...` key. |
@@ -103,7 +103,7 @@ Burin & Co. is run from Tenfold HQ (hq.tenfoldcommerce.com) through the signed A
   settings, AI spend, FinerWorks checks, the email outbox and the change log. Every change is logged.
 - Prices: the defaults are in `catalog.mts`; HQ's prices and seasonal prices override them and are refused
   below break-even (FinerWorks cost + AI + Stripe fees). The storefront reads them from `/api/catalog`.
-- Owner emails are off by default; HQ alerts replace them. Turn them back on in HQ → Admin → Store settings.
+- Owner emails go to `OWNER_EMAIL` for every new order, proof ready to review, approval and change request. HQ can't switch them off; clear `OWNER_EMAIL` to stop them.
 - AI: every Replicate run is logged with its estimated cost. The model lab (`/lab.html`) is always on for
   the owners; HQ sees its spend but can't switch it off. There's a monthly AI budget (alert at 75%). No AI runs on a schedule.
 - Support mail: customer emails reply to `support@burinandco.com`. Resend receives it and posts to

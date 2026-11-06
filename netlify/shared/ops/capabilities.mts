@@ -22,7 +22,7 @@ type Prop = { type: "string" | "number" | "integer" | "boolean"; title?: string;
 const schema = (properties: Record<string, Prop>, required: string[] = []) => ({ type: "object", properties, required });
 const orderId: Prop = { type: "string", title: "Order" };
 
-export const SETTING_KEYS = ["owner_emails", "maintenance", "headline", "owner_test_emails", "unit_cost_12x16", "unit_cost_16x20"] as const;
+export const SETTING_KEYS = ["maintenance", "headline", "owner_test_emails", "unit_cost_12x16", "unit_cost_16x20"] as const;
 
 export function adminSections() {
   return [
@@ -62,7 +62,7 @@ export function adminSections() {
     {
       id: "settings",
       title: "Store settings",
-      description: "Owner emails, maintenance mode, homepage headline, test-order emails and FinerWorks costs.",
+      description: "Maintenance mode, homepage headline, test-order emails and FinerWorks costs.",
       read_endpoint: "/api/ops/admin/settings",
       actions: [
         { name: "set_setting", label: "Change setting", scope: "row", destructive: false, params: schema({

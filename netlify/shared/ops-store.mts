@@ -38,7 +38,6 @@ export interface Settings {
   maintenance: boolean;
   maintenanceReason: string | null;
   headline: string | null;           // null = the headline written in index.html
-  ownerEmails: boolean;              // owner notification emails (off: HQ action items instead)
   labEnabled: boolean;               // no longer used: the model lab is always on (kept so old saved settings still parse)
   aiMonthlyCapCents: number;         // monthly AI budget; alert at 75%, lab blocked at 100%
   aiCapBlocksOrders: boolean;        // at the cap, also block regenerations and print upscales
@@ -54,7 +53,6 @@ export const DEFAULT_SETTINGS: Settings = {
   maintenance: false,
   maintenanceReason: null,
   headline: null,
-  ownerEmails: false,
   labEnabled: false,
   aiMonthlyCapCents: 10000,
   aiCapBlocksOrders: false,
